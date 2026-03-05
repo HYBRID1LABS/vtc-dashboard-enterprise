@@ -1,0 +1,705 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Gestión de Conductores | VTC Dashboard Enterprise</title>
+  
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700;800&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" />
+  <link rel="stylesheet" href="css/style.css">
+  
+  <style>
+    .drivers-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+      gap: 20px;
+    }
+    
+    .driver-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-lg);
+      padding: 20px;
+      transition: var(--transition);
+    }
+    
+    .driver-card:hover {
+      box-shadow: var(--shadow-md);
+      transform: translateY(-2px);
+    }
+    
+    .driver-card-header {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      margin-bottom: 16px;
+    }
+    
+    .driver-card-avatar {
+      width: 64px;
+      height: 64px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, var(--secondary) 0%, var(--accent) 100%);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 24px;
+      font-weight: 600;
+      color: white;
+    }
+    
+    .driver-card-info h3 {
+      font-size: 18px;
+      font-weight: 600;
+      margin-bottom: 4px;
+    }
+    
+    .driver-card-info p {
+      font-size: 13px;
+      color: var(--text-secondary);
+    }
+    
+    .driver-card-stats {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 12px;
+      margin-bottom: 16px;
+    }
+    
+    .stat-item {
+      text-align: center;
+      padding: 12px;
+      background: var(--bg-secondary);
+      border-radius: var(--radius-md);
+    }
+    
+    .stat-value {
+      font-size: 20px;
+      font-weight: 700;
+      color: var(--primary);
+    }
+    
+    .stat-label {
+      font-size: 12px;
+      color: var(--text-secondary);
+      margin-top: 4px;
+    }
+    
+    .driver-card-actions {
+      display: flex;
+      gap: 8px;
+    }
+    
+    .driver-card-actions .btn {
+      flex: 1;
+    }
+    
+    .driver-detail-modal {
+      max-width: 800px;
+    }
+    
+    .driver-detail-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 24px;
+      margin-top: 20px;
+    }
+    
+    .detail-section {
+      background: var(--bg-secondary);
+      padding: 20px;
+      border-radius: var(--radius-md);
+    }
+    
+    .detail-section h4 {
+      font-size: 16px;
+      font-weight: 600;
+      margin-bottom: 16px;
+      color: var(--primary);
+    }
+    
+    .detail-row {
+      display: flex;
+      justify-content: space-between;
+      padding: 12px 0;
+      border-bottom: 1px solid var(--border-light);
+    }
+    
+    .detail-row:last-child {
+      border-bottom: none;
+    }
+    
+    .detail-label {
+      color: var(--text-secondary);
+      font-size: 14px;
+    }
+    
+    .detail-value {
+      font-weight: 500;
+      font-size: 14px;
+    }
+    
+    .driver-history-table {
+      width: 100%;
+      margin-top: 16px;
+    }
+    
+    .online-hours-chart {
+      height: 200px;
+      margin-top: 16px;
+    }
+  </style>
+</head>
+<body>
+  <div class="app-container">
+    <!-- Sidebar -->
+    <aside class="sidebar" id="sidebar">
+      <div class="sidebar-header">
+        <div class="logo">
+          <div class="logo-icon">🚖</div>
+          <span>VTC Alicante</span>
+        </div>
+        <button class="sidebar-toggle" id="sidebar-toggle">
+          <i class="fas fa-chevron-left"></i>
+        </button>
+      </div>
+      
+      <nav class="sidebar-nav">
+        <div class="nav-section">
+          <div class="nav-section-title">Principal</div>
+          <a href="index.html" class="nav-item">
+            <span class="nav-item-icon"><i class="fas fa-home"></i></span>
+            <span data-i18n="dashboard">Dashboard</span>
+          </a>
+          <a href="drivers.html" class="nav-item active">
+            <span class="nav-item-icon"><i class="fas fa-users"></i></span>
+            <span data-i18n="drivers">Conductores</span>
+          </a>
+          <a href="trips.html" class="nav-item">
+            <span class="nav-item-icon"><i class="fas fa-route"></i></span>
+            <span data-i18n="trips">Viajes</span>
+          </a>
+        </div>
+        
+        <div class="nav-section">
+          <div class="nav-section-title">Analíticas</div>
+          <a href="analytics.html" class="nav-item">
+            <span class="nav-item-icon"><i class="fas fa-chart-line"></i></span>
+            <span data-i18n="analytics">Analíticas</span>
+          </a>
+          <a href="heatmaps.html" class="nav-item">
+            <span class="nav-item-icon"><i class="fas fa-fire"></i></span>
+            <span data-i18n="heatmaps">Zonas Calientes</span>
+          </a>
+        </div>
+        
+        <div class="nav-section">
+          <div class="nav-section-title">Gestión</div>
+          <a href="notifications.html" class="nav-item">
+            <span class="nav-item-icon"><i class="fas fa-bell"></i></span>
+            <span data-i18n="notifications">Notificaciones</span>
+          </a>
+          <a href="settings.html" class="nav-item">
+            <span class="nav-item-icon"><i class="fas fa-cog"></i></span>
+            <span data-i18n="settings">Configuración</span>
+          </a>
+        </div>
+      </nav>
+      
+      <div class="sidebar-footer">
+        <a href="login.html" class="nav-item" style="color: var(--error);">
+          <span class="nav-item-icon"><i class="fas fa-sign-out-alt"></i></span>
+          <span data-i18n="logout">Cerrar Sesión</span>
+        </a>
+      </div>
+    </aside>
+    
+    <!-- Main Content -->
+    <main class="main-content" id="main-content">
+      <!-- Header -->
+      <header class="header">
+        <div class="header-left">
+          <h1 class="page-title">Gestión de Conductores</h1>
+        </div>
+        
+        <div class="header-right">
+          <button class="header-action" onclick="window.location.href='index.html'">
+            <i class="fas fa-arrow-left"></i>
+            <span>Volver</span>
+          </button>
+          <button class="btn btn-primary" onclick="App.openAddDriverModal()">
+            <i class="fas fa-plus"></i>
+            <span>Añadir Conductor</span>
+          </button>
+        </div>
+      </header>
+      
+      <!-- Content -->
+      <div class="dashboard-content">
+        <!-- Filters -->
+        <div class="table-container" style="margin-bottom: 24px;">
+          <div class="table-header">
+            <h3 class="table-title">Filtros</h3>
+            <button class="btn btn-sm btn-secondary" onclick="App.clearFilters()">
+              <i class="fas fa-times"></i> Limpiar
+            </button>
+          </div>
+          <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 16px; padding: 20px;">
+            <div class="form-group" style="margin-bottom: 0;">
+              <label class="form-label">Buscar</label>
+              <input type="text" class="form-input" placeholder="Nombre, placa..." id="filter-search">
+            </div>
+            <div class="form-group" style="margin-bottom: 0;">
+              <label class="form-label">Estado</label>
+              <select class="form-select" id="filter-status">
+                <option value="">Todos</option>
+                <option value="available">Disponible</option>
+                <option value="busy">En Viaje</option>
+                <option value="offline">Offline</option>
+              </select>
+            </div>
+            <div class="form-group" style="margin-bottom: 0;">
+              <label class="form-label">Vehículo</label>
+              <select class="form-select" id="filter-vehicle">
+                <option value="">Todos</option>
+                <option value="coche">Coche</option>
+                <option value="moto">Moto</option>
+                <option value="van">Van</option>
+                <option value="premium">Premium</option>
+              </select>
+            </div>
+            <div class="form-group" style="margin-bottom: 0;">
+              <label class="form-label">Rating mínimo</label>
+              <select class="form-select" id="filter-rating">
+                <option value="">Cualquiera</option>
+                <option value="4.5">⭐ 4.5+</option>
+                <option value="4.0">⭐ 4.0+</option>
+                <option value="3.5">⭐ 3.5+</option>
+              </select>
+            </div>
+          </div>
+        </div>
+        
+        <!-- Drivers Grid -->
+        <div class="drivers-grid" id="drivers-grid">
+          <!-- Driver cards will be loaded here -->
+        </div>
+      </div>
+    </main>
+  </div>
+  
+  <!-- Driver Detail Modal -->
+  <div class="modal-overlay" id="driver-detail-modal">
+    <div class="modal driver-detail-modal">
+      <div class="modal-header">
+        <h3 class="modal-title">Detalle del Conductor</h3>
+        <button class="modal-close" onclick="App.closeDriverDetailModal()">×</button>
+      </div>
+      <div class="modal-body" id="driver-detail-content">
+        <!-- Content will be loaded here -->
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-secondary" onclick="App.closeDriverDetailModal()">Cerrar</button>
+        <button class="btn btn-primary">Editar Perfil</button>
+      </div>
+    </div>
+  </div>
+  
+  <!-- Add Driver Modal -->
+  <div class="modal-overlay" id="add-driver-modal">
+    <div class="modal">
+      <div class="modal-header">
+        <h3 class="modal-title">Añadir Conductor</h3>
+        <button class="modal-close" onclick="App.closeAddDriverModal()">×</button>
+      </div>
+      <div class="modal-body">
+        <form id="add-driver-form">
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px;">
+            <div class="form-group">
+              <label class="form-label">Nombre *</label>
+              <input type="text" class="form-input" required placeholder="Juan García">
+            </div>
+            <div class="form-group">
+              <label class="form-label">Apellidos *</label>
+              <input type="text" class="form-input" required placeholder="Pérez López">
+            </div>
+          </div>
+          
+          <div class="form-group">
+            <label class="form-label">Email *</label>
+            <input type="email" class="form-input" required placeholder="juan@vtcalicante.com">
+          </div>
+          
+          <div class="form-group">
+            <label class="form-label">Teléfono *</label>
+            <input type="tel" class="form-input" required placeholder="+34 600 000 000">
+          </div>
+          
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px;">
+            <div class="form-group">
+              <label class="form-label">Modelo Vehículo *</label>
+              <input type="text" class="form-input" required placeholder="Toyota Prius">
+            </div>
+            <div class="form-group">
+              <label class="form-label">Color *</label>
+              <input type="text" class="form-input" required placeholder="Blanco">
+            </div>
+          </div>
+          
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px;">
+            <div class="form-group">
+              <label class="form-label">Matrícula *</label>
+              <input type="text" class="form-input" required placeholder="1234 ABC">
+            </div>
+            <div class="form-group">
+              <label class="form-label">Tipo Vehículo *</label>
+              <select class="form-select" required>
+                <option value="">Seleccionar</option>
+                <option value="coche">Coche</option>
+                <option value="moto">Moto</option>
+                <option value="van">Van</option>
+                <option value="premium">Premium</option>
+              </select>
+            </div>
+          </div>
+        </form>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-secondary" onclick="App.closeAddDriverModal()">Cancelar</button>
+        <button class="btn btn-primary" onclick="App.saveDriver()">Guardar Conductor</button>
+      </div>
+    </div>
+  </div>
+  
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <script src="js/app.js"></script>
+  <script>
+    // Drivers page specific functionality
+    const DriversPage = {
+      async init() {
+        await this.loadDrivers();
+        this.setupFilters();
+      },
+      
+      async loadDrivers() {
+        try {
+          const response = await API.getDrivers();
+          if (response.success) {
+            this.renderDriversGrid(response.data);
+          }
+        } catch (error) {
+          console.error('[DriversPage] Error loading drivers:', error);
+          // Mock data for demo
+          this.renderDriversGrid(this.getMockDrivers());
+        }
+      },
+      
+      getMockDrivers() {
+        return [
+          {
+            id: '1',
+            name: 'Carlos Martínez',
+            vehicle: 'Toyota Prius Blanco',
+            licensePlate: '1234 ABC',
+            status: 'available',
+            rating: 4.8,
+            totalTrips: 342,
+            phone: '+34 600 111 222',
+            email: 'carlos@vtcalicante.com',
+            vehicleType: 'coche',
+            hoursOnline: 156,
+            revenue: 4520.50
+          },
+          {
+            id: '2',
+            name: 'María López',
+            vehicle: 'Tesla Model 3 Negro',
+            licensePlate: '5678 DEF',
+            status: 'busy',
+            rating: 4.9,
+            totalTrips: 521,
+            phone: '+34 600 333 444',
+            email: 'maria@vtcalicante.com',
+            vehicleType: 'premium',
+            hoursOnline: 198,
+            revenue: 8930.75
+          },
+          {
+            id: '3',
+            name: 'José García',
+            vehicle: 'Mercedes V-Class',
+            licensePlate: '9012 GHI',
+            status: 'offline',
+            rating: 4.7,
+            totalTrips: 289,
+            phone: '+34 600 555 666',
+            email: 'jose@vtcalicante.com',
+            vehicleType: 'van',
+            hoursOnline: 142,
+            revenue: 5210.30
+          },
+          {
+            id: '4',
+            name: 'Ana Sánchez',
+            vehicle: 'Honda CB500X',
+            licensePlate: '3456 JKL',
+            status: 'available',
+            rating: 4.6,
+            totalTrips: 178,
+            phone: '+34 600 777 888',
+            email: 'ana@vtcalicante.com',
+            vehicleType: 'moto',
+            hoursOnline: 98,
+            revenue: 2340.60
+          }
+        ];
+      },
+      
+      renderDriversGrid(drivers) {
+        const container = document.getElementById('drivers-grid');
+        if (!container) return;
+        
+        container.innerHTML = drivers.map(driver => `
+          <div class="driver-card">
+            <div class="driver-card-header">
+              <div class="driver-card-avatar">${Utils.getInitials(driver.name)}</div>
+              <div class="driver-card-info">
+                <h3>${driver.name}</h3>
+                <p>${driver.vehicle} • ${driver.licensePlate}</p>
+              </div>
+            </div>
+            
+            <div class="driver-card-stats">
+              <div class="stat-item">
+                <div class="stat-value">⭐ ${driver.rating}</div>
+                <div class="stat-label">Rating</div>
+              </div>
+              <div class="stat-item">
+                <div class="stat-value">${driver.totalTrips}</div>
+                <div class="stat-label">Viajes</div>
+              </div>
+              <div class="stat-item">
+                <div class="stat-value">${driver.hoursOnline}h</div>
+                <div class="stat-label">Horas Online</div>
+              </div>
+              <div class="stat-item">
+                <div class="stat-value">${Utils.formatCurrency(driver.revenue)}</div>
+                <div class="stat-label">Ingresos</div>
+              </div>
+            </div>
+            
+            <div style="margin-bottom: 16px;">
+              <span class="status-badge ${Utils.getStatusClass(driver.status)}">
+                <span class="status-dot"></span>
+                ${LanguageManager.t(driver.status)}
+              </span>
+            </div>
+            
+            <div class="driver-card-actions">
+              <button class="btn btn-sm btn-secondary" onclick="DriversPage.viewDriver('${driver.id}')">
+                <i class="fas fa-eye"></i> Ver
+              </button>
+              <a href="tel:${driver.phone}" class="btn btn-sm btn-primary">
+                <i class="fas fa-phone"></i> Llamar
+              </a>
+              <button class="btn btn-sm btn-secondary" onclick="DriversPage.viewHistory('${driver.id}')">
+                <i class="fas fa-history"></i> Historial
+              </button>
+            </div>
+          </div>
+        `).join('');
+      },
+      
+      viewDriver(id) {
+        const driver = this.getMockDrivers().find(d => d.id === id);
+        if (!driver) return;
+        
+        const content = document.getElementById('driver-detail-content');
+        content.innerHTML = `
+          <div style="display: flex; align-items: center; gap: 20px; margin-bottom: 24px;">
+            <div class="driver-card-avatar" style="width: 80px; height: 80px; font-size: 32px;">${Utils.getInitials(driver.name)}</div>
+            <div>
+              <h2 style="font-size: 24px; margin-bottom: 4px;">${driver.name}</h2>
+              <p style="color: var(--text-secondary);">${driver.vehicle} • ${driver.licensePlate}</p>
+              <div style="margin-top: 8px;">
+                <span class="status-badge ${Utils.getStatusClass(driver.status)}">
+                  <span class="status-dot"></span>
+                  ${LanguageManager.t(driver.status)}
+                </span>
+              </div>
+            </div>
+          </div>
+          
+          <div class="driver-detail-grid">
+            <div class="detail-section">
+              <h4>Información de Contacto</h4>
+              <div class="detail-row">
+                <span class="detail-label">Email</span>
+                <span class="detail-value">${driver.email}</span>
+              </div>
+              <div class="detail-row">
+                <span class="detail-label">Teléfono</span>
+                <span class="detail-value"><a href="tel:${driver.phone}">${driver.phone}</a></span>
+              </div>
+              <div class="detail-row">
+                <span class="detail-label">Matrícula</span>
+                <span class="detail-value">${driver.licensePlate}</span>
+              </div>
+              <div class="detail-row">
+                <span class="detail-label">Tipo Vehículo</span>
+                <span class="detail-value">${driver.vehicleType}</span>
+              </div>
+            </div>
+            
+            <div class="detail-section">
+              <h4>Estadísticas</h4>
+              <div class="detail-row">
+                <span class="detail-label">Rating</span>
+                <span class="detail-value">⭐ ${driver.rating}</span>
+              </div>
+              <div class="detail-row">
+                <span class="detail-label">Viajes Totales</span>
+                <span class="detail-value">${driver.totalTrips}</span>
+              </div>
+              <div class="detail-row">
+                <span class="detail-label">Horas Online</span>
+                <span class="detail-value">${driver.hoursOnline}h</span>
+              </div>
+              <div class="detail-row">
+                <span class="detail-label">Ingresos Totales</span>
+                <span class="detail-value">${Utils.formatCurrency(driver.revenue)}</span>
+              </div>
+            </div>
+          </div>
+          
+          <div class="detail-section" style="margin-top: 24px;">
+            <h4>Horas Conectado (Últimos 7 días)</h4>
+            <div class="online-hours-chart">
+              <canvas id="hoursChart"></canvas>
+            </div>
+          </div>
+          
+          <div class="detail-section" style="margin-top: 24px;">
+            <h4>Últimos Viajes</h4>
+            <table class="data-table driver-history-table">
+              <thead>
+                <tr>
+                  <th>Fecha</th>
+                  <th>Origen</th>
+                  <th>Destino</th>
+                  <th>Precio</th>
+                  <th>Rating</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>05/03 14:30</td>
+                  <td>Aeropuerto Alicante</td>
+                  <td>Playa de San Juan</td>
+                  <td>€35.50</td>
+                  <td>⭐ 5.0</td>
+                </tr>
+                <tr>
+                  <td>05/03 12:15</td>
+                  <td>Centro Ciudad</td>
+                  <td>Cabo de las Huertas</td>
+                  <td>€18.20</td>
+                  <td>⭐ 4.8</td>
+                </tr>
+                <tr>
+                  <td>05/03 10:00</td>
+                  <td>Estación Renfe</td>
+                  <td>Aeropuerto Alicante</td>
+                  <td>€42.00</td>
+                  <td>⭐ 5.0</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        `;
+        
+        document.getElementById('driver-detail-modal').classList.add('open');
+        
+        // Create hours chart
+        setTimeout(() => {
+          const ctx = document.getElementById('hoursChart');
+          if (ctx) {
+            ChartManager.createLineChart('hoursChart', {
+              labels: ['Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb', 'Dom'],
+              datasets: [{
+                label: 'Horas',
+                data: [8.5, 9.2, 7.8, 10.1, 8.9, 6.5, 5.2],
+                borderColor: '#276EF1',
+                backgroundColor: 'rgba(39, 110, 241, 0.1)',
+                fill: true,
+                tension: 0.4
+              }]
+            }, { showLegend: false });
+          }
+        }, 100);
+      },
+      
+      closeDriverDetailModal() {
+        document.getElementById('driver-detail-modal').classList.remove('open');
+      },
+      
+      openAddDriverModal() {
+        document.getElementById('add-driver-modal').classList.add('open');
+      },
+      
+      closeAddDriverModal() {
+        document.getElementById('add-driver-modal').classList.remove('open');
+      },
+      
+      saveDriver() {
+        // Implement driver save logic
+        console.log('[DriversPage] Saving driver...');
+        this.closeAddDriverModal();
+        this.loadDrivers();
+      },
+      
+      setupFilters() {
+        const filters = ['filter-search', 'filter-status', 'filter-vehicle', 'filter-rating'];
+        filters.forEach(id => {
+          const el = document.getElementById(id);
+          if (el) {
+            el.addEventListener('change', () => this.applyFilters());
+            el.addEventListener('input', Utils.debounce(() => this.applyFilters(), 300));
+          }
+        });
+      },
+      
+      applyFilters() {
+        // Implement filter logic
+        console.log('[DriversPage] Applying filters...');
+      },
+      
+      clearFilters() {
+        ['filter-search', 'filter-status', 'filter-vehicle', 'filter-rating'].forEach(id => {
+          const el = document.getElementById(id);
+          if (el) el.value = '';
+        });
+        this.loadDrivers();
+      },
+      
+      viewHistory(id) {
+        console.log('[DriversPage] View history for:', id);
+        this.viewDriver(id);
+      }
+    };
+    
+    // Expose to global scope
+    window.DriversPage = DriversPage;
+    
+    // Initialize page
+    document.addEventListener('DOMContentLoaded', () => {
+      DriversPage.init();
+    });
+  </script>
+</body>
+</html>

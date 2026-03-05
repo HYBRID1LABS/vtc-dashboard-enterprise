@@ -1,0 +1,901 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>VTC Dashboard MVP v1.0 | Hybrid Labs</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary: #2563eb;
+            --primary-dark: #1e40af;
+            --secondary: #10b981;
+            --accent: #f59e0b;
+            --dark: #0f172a;
+            --light: #f8fafc;
+            --gradient-1: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            --gradient-2: linear-gradient(135deg, #2563eb 0%, #10b981 100%);
+            --gradient-3: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+        }
+        
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            background: #f1f5f9;
+            color: var(--dark);
+        }
+        
+        .sidebar {
+            background: var(--gradient-3);
+            min-height: 100vh;
+            width: 280px;
+            position: fixed;
+            left: 0;
+            top: 0;
+            padding: 24px 0;
+            color: white;
+        }
+        
+        .sidebar-brand {
+            font-size: 1.5rem;
+            font-weight: 800;
+            background: var(--gradient-2);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            padding: 0 24px;
+            margin-bottom: 32px;
+        }
+        
+        .nav-item {
+            padding: 14px 24px;
+            cursor: pointer;
+            transition: all 0.3s;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            border-left: 3px solid transparent;
+        }
+        
+        .nav-item:hover {
+            background: rgba(255,255,255,0.1);
+        }
+        
+        .nav-item.active {
+            background: rgba(37, 99, 235, 0.2);
+            border-left-color: var(--primary);
+        }
+        
+        .main-content {
+            margin-left: 280px;
+            padding: 32px;
+        }
+        
+        .header {
+            background: white;
+            padding: 24px 32px;
+            border-radius: 16px;
+            margin-bottom: 32px;
+            box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .metric-card {
+            background: white;
+            padding: 28px;
+            border-radius: 16px;
+            box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1);
+            transition: all 0.3s;
+        }
+        
+        .metric-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 10px 15px -3px rgb(0 0 0 / 0.1);
+        }
+        
+        .metric-icon {
+            width: 56px;
+            height: 56px;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.75rem;
+            margin-bottom: 16px;
+        }
+        
+        .metric-value {
+            font-size: 2.25rem;
+            font-weight: 800;
+            margin-bottom: 4px;
+        }
+        
+        .metric-label {
+            color: #64748b;
+            font-size: 0.95rem;
+        }
+        
+        .metric-change {
+            font-size: 0.85rem;
+            font-weight: 600;
+            margin-top: 8px;
+        }
+        
+        .positive { color: var(--secondary); }
+        .negative { color: #ef4444; }
+        
+        .grid-4 {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 24px;
+            margin-bottom: 32px;
+        }
+        
+        .grid-2 {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+            gap: 24px;
+            margin-bottom: 32px;
+        }
+        
+        .panel {
+            background: white;
+            padding: 28px;
+            border-radius: 16px;
+            box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1);
+        }
+        
+        .panel-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 24px;
+        }
+        
+        .panel-title {
+            font-size: 1.25rem;
+            font-weight: 700;
+        }
+        
+        .btn {
+            padding: 12px 24px;
+            border-radius: 10px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            border: none;
+            font-size: 0.95rem;
+        }
+        
+        .btn-primary {
+            background: var(--gradient-2);
+            color: white;
+        }
+        
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(37, 99, 235, 0.3);
+        }
+        
+        .btn-secondary {
+            background: #f1f5f9;
+            color: var(--dark);
+        }
+        
+        .btn-secondary:hover {
+            background: #e2e8f0;
+        }
+        
+        .input-group {
+            margin-bottom: 20px;
+        }
+        
+        .input-label {
+            display: block;
+            font-weight: 600;
+            margin-bottom: 8px;
+            color: #334155;
+        }
+        
+        .input-field {
+            width: 100%;
+            padding: 14px 16px;
+            border: 2px solid #e2e8f0;
+            border-radius: 10px;
+            font-size: 1rem;
+            transition: all 0.3s;
+        }
+        
+        .input-field:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+        }
+        
+        .result-box {
+            background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%);
+            padding: 24px;
+            border-radius: 12px;
+            border: 2px solid var(--primary);
+            margin-top: 24px;
+        }
+        
+        .result-row {
+            display: flex;
+            justify-content: space-between;
+            padding: 12px 0;
+            border-bottom: 1px solid rgba(37, 99, 235, 0.2);
+        }
+        
+        .result-row:last-child {
+            border-bottom: none;
+            margin-top: 12px;
+            padding-top: 16px;
+            border-top: 2px solid var(--primary);
+        }
+        
+        .result-label {
+            color: #64748b;
+            font-weight: 500;
+        }
+        
+        .result-value {
+            font-weight: 700;
+            font-size: 1.1rem;
+        }
+        
+        .result-value.highlight {
+            color: var(--secondary);
+            font-size: 1.5rem;
+        }
+        
+        .vehicle-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 16px 0;
+            border-bottom: 1px solid #e2e8f0;
+        }
+        
+        .vehicle-row:last-child {
+            border-bottom: none;
+        }
+        
+        .vehicle-info {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+        
+        .vehicle-icon {
+            width: 40px;
+            height: 40px;
+            background: #f1f5f9;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.25rem;
+        }
+        
+        .status-badge {
+            padding: 6px 12px;
+            border-radius: 20px;
+            font-size: 0.85rem;
+            font-weight: 600;
+        }
+        
+        .status-active {
+            background: rgba(16, 185, 129, 0.1);
+            color: var(--secondary);
+        }
+        
+        .status-warning {
+            background: rgba(245, 158, 11, 0.1);
+            color: var(--accent);
+        }
+        
+        .status-offline {
+            background: rgba(100, 116, 139, 0.1);
+            color: #64748b;
+        }
+        
+        .progress-bar {
+            width: 100%;
+            height: 8px;
+            background: #e2e8f0;
+            border-radius: 4px;
+            overflow: hidden;
+            margin-top: 8px;
+        }
+        
+        .progress-fill {
+            height: 100%;
+            border-radius: 4px;
+            transition: width 0.5s ease;
+        }
+        
+        .chart-placeholder {
+            height: 200px;
+            background: linear-gradient(135deg, #f8fafc 0%, #e0e7ff 100%);
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #64748b;
+            font-weight: 500;
+        }
+        
+        .module-section {
+            display: none;
+        }
+        
+        .module-section.active {
+            display: block;
+        }
+        
+        .voice-badge {
+            background: linear-gradient(135deg, #10b981, #059669);
+            color: white;
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-size: 0.85rem;
+            font-weight: 600;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            box-shadow: 0 4px 12px rgba(16,185,129,0.3);
+        }
+        
+        .alert-box {
+            padding: 16px 20px;
+            border-radius: 12px;
+            margin-bottom: 16px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+        
+        .alert-warning {
+            background: rgba(245, 158, 11, 0.1);
+            border-left: 4px solid var(--accent);
+            color: #92400e;
+        }
+        
+        .alert-success {
+            background: rgba(16, 185, 129, 0.1);
+            border-left: 4px solid var(--secondary);
+            color: #065f46;
+        }
+    </style>
+</head>
+<body x-data="dashboard()">
+    <!-- Sidebar -->
+    <div class="sidebar">
+        <div class="sidebar-brand">🚀 Hybrid Labs</div>
+        <nav>
+            <div class="nav-item active" @click="currentModule = 'dashboard'" :class="{ 'active': currentModule === 'dashboard' }">
+                <span>📊</span>
+                <span>Dashboard</span>
+            </div>
+            <div class="nav-item" @click="currentModule = 'simulator'" :class="{ 'active': currentModule === 'simulator' }">
+                <span>🤖</span>
+                <span>Simulador IA</span>
+            </div>
+            <div class="nav-item" @click="currentModule = 'demo'" :class="{ 'active': currentModule === 'demo' }">
+                <span>🎯</span>
+                <span>Demo Interactiva</span>
+            </div>
+        </nav>
+        <div style="margin-top: auto; padding: 24px;">
+            <div class="voice-badge">
+                <span>🎤</span>
+                <span>Control por Voz Activo</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main Content -->
+    <div class="main-content">
+        <!-- Header -->
+        <div class="header">
+            <div>
+                <h1 style="font-size: 1.75rem; font-weight: 800; margin-bottom: 4px;">VTC Dashboard v1.0</h1>
+                <p style="color: #64748b;">Gestión inteligente de flotas con IA</p>
+            </div>
+            <div style="display: flex; gap: 12px; align-items: center;">
+                <button class="btn btn-secondary" @click="refreshData()">🔄 Actualizar</button>
+                <button class="btn btn-primary" @click="exportReport()">📄 Exportar Reporte</button>
+            </div>
+        </div>
+
+        <!-- MODULE 1: DASHBOARD PRINCIPAL -->
+        <div class="module-section" :class="{ 'active': currentModule === 'dashboard' }">
+            <!-- Alertas -->
+            <div class="alert-box alert-warning">
+                <span>⚠️</span>
+                <div>
+                    <strong>3 vehículos con bajo rendimiento detectados</strong>
+                    <p style="font-size: 0.9rem;">Acción recomendada: Revisar rutas y asignar coaching</p>
+                </div>
+            </div>
+            <div class="alert-box alert-success">
+                <span>✅</span>
+                <div>
+                    <strong>Ahorro acumulado este mes: €11,247</strong>
+                    <p style="font-size: 0.9rem;">Proyección final: €13,798 (81% del objetivo)</p>
+                </div>
+            </div>
+
+            <!-- Métricas Principales -->
+            <div class="grid-4">
+                <div class="metric-card">
+                    <div class="metric-icon" style="background: linear-gradient(135deg, #3b82f6, #1d4ed8);">💰</div>
+                    <div class="metric-value">€47,832</div>
+                    <div class="metric-label">Ingresos Mes</div>
+                    <div class="metric-change positive">↑ +18% vs mes anterior</div>
+                </div>
+                <div class="metric-card">
+                    <div class="metric-icon" style="background: linear-gradient(135deg, #ef4444, #dc2626);">📉</div>
+                    <div class="metric-value">€18,429</div>
+                    <div class="metric-label">Gastos Operativos</div>
+                    <div class="metric-change negative">↓ -12% optimización</div>
+                </div>
+                <div class="metric-card">
+                    <div class="metric-icon" style="background: linear-gradient(135deg, #10b981, #059669);">📈</div>
+                    <div class="metric-value">€29,403</div>
+                    <div class="metric-label">Beneficio Neto</div>
+                    <div class="metric-change positive">↑ +34% crecimiento</div>
+                </div>
+                <div class="metric-card">
+                    <div class="metric-icon" style="background: linear-gradient(135deg, #f59e0b, #d97706);">🚗</div>
+                    <div class="metric-value">8,547 km</div>
+                    <div class="metric-label">KMs Totales</div>
+                    <div class="metric-change positive">↑ +22% actividad</div>
+                </div>
+            </div>
+
+            <!-- Flota en Tiempo Real -->
+            <div class="grid-2">
+                <div class="panel">
+                    <div class="panel-header">
+                        <div class="panel-title">🚘 Estado de Flota</div>
+                        <span class="status-badge status-active" x-text="activeVehicles + ' activos'"></span>
+                    </div>
+                    <div>
+                        <template x-for="vehicle in vehicles" :key="vehicle.id">
+                            <div class="vehicle-row">
+                                <div class="vehicle-info">
+                                    <div class="vehicle-icon" x-text="vehicle.icon"></div>
+                                    <div>
+                                        <div style="font-weight: 600;" x-text="vehicle.name"></div>
+                                        <div style="font-size: 0.85rem; color: #64748b;" x-text="vehicle.driver"></div>
+                                    </div>
+                                </div>
+                                <div style="text-align: right;">
+                                    <span class="status-badge" 
+                                          :class="{
+                                              'status-active': vehicle.status === 'active',
+                                              'status-warning': vehicle.status === 'warning',
+                                              'status-offline': vehicle.status === 'offline'
+                                          }"
+                                          x-text="vehicle.statusText">
+                                    </span>
+                                    <div style="font-size: 0.85rem; color: #64748b; margin-top: 4px;" x-text="vehicle.performance + '% rendimiento'"></div>
+                                    <div class="progress-bar">
+                                        <div class="progress-fill" 
+                                             :style="'width: ' + vehicle.performance + '%; background: ' + (vehicle.performance > 80 ? '#10b981' : vehicle.performance > 50 ? '#f59e0b' : '#ef4444')"
+                                        ></div>
+                                    </div>
+                                </div>
+                            </div>
+                        </template>
+                    </div>
+                </div>
+
+                <div class="panel">
+                    <div class="panel-header">
+                        <div class="panel-title">📊 Métricas de Rendimiento</div>
+                    </div>
+                    <div style="display: flex; flex-direction: column; gap: 20px;">
+                        <div>
+                            <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
+                                <span style="font-weight: 600;">Cancelaciones</span>
+                                <span style="font-weight: 700; color: #10b981;">37/mes (-66%)</span>
+                            </div>
+                            <div class="progress-bar">
+                                <div class="progress-fill" style="width: 34%; background: #10b981;"></div>
+                            </div>
+                        </div>
+                        <div>
+                            <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
+                                <span style="font-weight: 600;">Rendimiento Promedio</span>
+                                <span style="font-weight: 700; color: #3b82f6;">87%</span>
+                            </div>
+                            <div class="progress-bar">
+                                <div class="progress-fill" style="width: 87%; background: #3b82f6;"></div>
+                            </div>
+                        </div>
+                        <div>
+                            <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
+                                <span style="font-weight: 600;">Horas Cumplidas</span>
+                                <span style="font-weight: 700; color: #10b981;">98.2%</span>
+                            </div>
+                            <div class="progress-bar">
+                                <div class="progress-fill" style="width: 98.2%; background: #10b981;"></div>
+                            </div>
+                        </div>
+                        <div>
+                            <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
+                                <span style="font-weight: 600;">Eficiencia Energética</span>
+                                <span style="font-weight: 700; color: #f59e0b;">90%</span>
+                            </div>
+                            <div class="progress-bar">
+                                <div class="progress-fill" style="width: 90%; background: #f59e0b;"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Heatmap Predictivo -->
+            <div class="panel">
+                <div class="panel-header">
+                    <div class="panel-title">🔥 Heatmap Predictivo de Demanda (Próximas 4h)</div>
+                    <button class="btn btn-secondary">Ver Mapa Completo</button>
+                </div>
+                <div class="chart-placeholder">
+                    <div style="text-align: center;">
+                        <div style="font-size: 3rem; margin-bottom: 12px;">🗺️</div>
+                        <div>Mapa de calor en tiempo real</div>
+                        <div style="font-size: 0.9rem; margin-top: 8px;">Zonas de alta demanda: Centro (85%), Aeropuerto (72%), Playa (64%)</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- MODULE 2: SIMULADOR DE AHORRO IA -->
+        <div class="module-section" :class="{ 'active': currentModule === 'simulator' }">
+            <div class="panel" style="max-width: 800px; margin: 0 auto;">
+                <div class="panel-header" style="flex-direction: column; align-items: flex-start; gap: 12px;">
+                    <div>
+                        <div class="panel-title" style="font-size: 1.5rem;">🤖 Simulador de Ahorro con IA</div>
+                        <p style="color: #64748b; margin-top: 4px;">Introduce los datos de tu flota y calcula tu ahorro potencial</p>
+                    </div>
+                    <div class="voice-badge">
+                        <span>🎤</span>
+                        <span>Prueba: "simular con 15 vehiculos"</span>
+                    </div>
+                </div>
+
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
+                    <div class="input-group">
+                        <label class="input-label">Número de Vehículos</label>
+                        <input type="number" class="input-field" x-model="simulator.vehicles" placeholder="ej: 10" min="1" max="500">
+                    </div>
+                    <div class="input-group">
+                        <label class="input-label">Conductores</label>
+                        <input type="number" class="input-field" x-model="simulator.drivers" placeholder="ej: 19" min="1" max="1000">
+                    </div>
+                    <div class="input-group">
+                        <label class="input-label">Cancelaciones/Mes</label>
+                        <input type="number" class="input-field" x-model="simulator.cancellations" placeholder="ej: 109" min="0">
+                    </div>
+                    <div class="input-group">
+                        <label class="input-label">Consumo Energético Mensual (€)</label>
+                        <input type="number" class="input-field" x-model="simulator.energyCost" placeholder="ej: 6000" min="0">
+                    </div>
+                    <div class="input-group">
+                        <label class="input-label">Rendimiento Vehículo Menos Productivo (%)</label>
+                        <input type="number" class="input-field" x-model="simulator.lowPerformance" placeholder="ej: 49" min="0" max="100">
+                    </div>
+                    <div class="input-group">
+                        <label class="input-label">Horas No Cumplidas/Semana</label>
+                        <input type="number" class="input-field" x-model="simulator.unfulfilledHours" placeholder="ej: 5" min="0">
+                    </div>
+                </div>
+
+                <button class="btn btn-primary" style="width: 100%; margin-top: 12px;" @click="calculateSavings()">
+                    🚀 Calcular Ahorro con IA
+                </button>
+
+                <div class="result-box" x-show="simulator.results" x-transition>
+                    <div class="result-row">
+                        <span class="result-label">Ahorro en Cancelaciones</span>
+                        <span class="result-value" x-text="formatCurrency(simulator.results.cancellationSavings)"></span>
+                    </div>
+                    <div class="result-row">
+                        <span class="result-label">Ahorro en Rendimiento</span>
+                        <span class="result-value" x-text="formatCurrency(simulator.results.performanceSavings)"></span>
+                    </div>
+                    <div class="result-row">
+                        <span class="result-label">Ahorro en Cumplimiento Horario</span>
+                        <span class="result-value" x-text="formatCurrency(simulator.results.scheduleSavings)"></span>
+                    </div>
+                    <div class="result-row">
+                        <span class="result-label">Ahorro en Heatmap Predictivo</span>
+                        <span class="result-value" x-text="formatCurrency(simulator.results.heatmapSavings)"></span>
+                    </div>
+                    <div class="result-row">
+                        <span class="result-label">Ahorro en Optimización Energética</span>
+                        <span class="result-value" x-text="formatCurrency(simulator.results.energySavings)"></span>
+                    </div>
+                    <div class="result-row">
+                        <span class="result-label" style="font-size: 1.2rem;">AHORRO TOTAL MENSUAL</span>
+                        <span class="result-value highlight" x-text="formatCurrency(simulator.results.totalSavings)"></span>
+                    </div>
+                    <div class="result-row">
+                        <span class="result-label">ROI Primer Mes</span>
+                        <span class="result-value positive" x-text="simulator.results.roi + '%'"></span>
+                    </div>
+                    <div class="result-row">
+                        <span class="result-label">Payback</span>
+                        <span class="result-value positive" x-text="simulator.results.payback + ' días'"></span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- MODULE 3: DEMO INTERACTIVA -->
+        <div class="module-section" :class="{ 'active': currentModule === 'demo' }">
+            <div class="grid-2">
+                <div class="panel">
+                    <div class="panel-header">
+                        <div class="panel-title">📈 Evolución de Ingresos (Demo)</div>
+                        <select class="btn btn-secondary" style="padding: 8px 12px;">
+                            <option>Últimos 30 días</option>
+                            <option>Últimos 90 días</option>
+                            <option>Último año</option>
+                        </select>
+                    </div>
+                    <div class="chart-placeholder" style="height: 300px;">
+                        <div style="text-align: center;">
+                            <div style="font-size: 3rem; margin-bottom: 12px;">📊</div>
+                            <div>Gráfico de evolución de ingresos</div>
+                            <div style="font-size: 0.9rem; margin-top: 8px; color: #10b981;">+18% crecimiento mensual</div>
+                            <div style="display: flex; gap: 8px; justify-content: center; margin-top: 16px;">
+                                <div style="width: 30px; height: 60px; background: #3b82f6; border-radius: 4px;"></div>
+                                <div style="width: 30px; height: 80px; background: #3b82f6; border-radius: 4px;"></div>
+                                <div style="width: 30px; height: 100px; background: #3b82f6; border-radius: 4px;"></div>
+                                <div style="width: 30px; height: 120px; background: #3b82f6; border-radius: 4px;"></div>
+                                <div style="width: 30px; height: 150px; background: #10b981; border-radius: 4px;"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="panel">
+                    <div class="panel-header">
+                        <div class="panel-title">🎯 Objetivos vs Realidad</div>
+                    </div>
+                    <div style="display: flex; flex-direction: column; gap: 24px;">
+                        <div>
+                            <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
+                                <span style="font-weight: 600;">Ingresos Mensuales</span>
+                                <span style="font-weight: 700;">€47,832 / €50,000</span>
+                            </div>
+                            <div class="progress-bar">
+                                <div class="progress-fill" style="width: 95.6%; background: #10b981;"></div>
+                            </div>
+                            <div style="font-size: 0.85rem; color: #10b981; margin-top: 4px;">95.6% del objetivo ✅</div>
+                        </div>
+                        <div>
+                            <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
+                                <span style="font-weight: 600;">Reducción Cancelaciones</span>
+                                <span style="font-weight: 700;">66% / 70%</span>
+                            </div>
+                            <div class="progress-bar">
+                                <div class="progress-fill" style="width: 94.3%; background: #f59e0b;"></div>
+                            </div>
+                            <div style="font-size: 0.85rem; color: #f59e0b; margin-top: 4px;">94.3% del objetivo ⚠️</div>
+                        </div>
+                        <div>
+                            <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
+                                <span style="font-weight: 600;">Ahorro Energético</span>
+                                <span style="font-weight: 700;">10% / 15%</span>
+                            </div>
+                            <div class="progress-bar">
+                                <div class="progress-fill" style="width: 66.7%; background: #3b82f6;"></div>
+                            </div>
+                            <div style="font-size: 0.85rem; color: #3b82f6; margin-top: 4px;">66.7% del objetivo 📈</div>
+                        </div>
+                        <div>
+                            <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
+                                <span style="font-weight: 600;">Satisfacción Conductores</span>
+                                <span style="font-weight: 700;">4.6 / 5.0</span>
+                            </div>
+                            <div class="progress-bar">
+                                <div class="progress-fill" style="width: 92%; background: #10b981;"></div>
+                            </div>
+                            <div style="font-size: 0.85rem; color: #10b981; margin-top: 4px;">92% del objetivo ✅</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Notificaciones en Tiempo Real -->
+            <div class="panel">
+                <div class="panel-header">
+                    <div class="panel-title">🔔 Notificaciones en Tiempo Real (Demo)</div>
+                    <button class="btn btn-secondary" @click="addNotification()">+ Simular Notificación</button>
+                </div>
+                <div>
+                    <template x-for="notification in notifications" :key="notification.id">
+                        <div class="alert-box" 
+                             :class="notification.type === 'warning' ? 'alert-warning' : 'alert-success'"
+                             x-transition>
+                            <span x-text="notification.icon"></span>
+                            <div>
+                                <strong x-text="notification.title"></strong>
+                                <p style="font-size: 0.9rem;" x-text="notification.message"></p>
+                            </div>
+                            <span style="font-size: 0.85rem; color: #64748b; margin-left: auto;" x-text="notification.time"></span>
+                        </div>
+                    </template>
+                </div>
+            </div>
+
+            <!-- Acciones Rápidas -->
+            <div class="grid-4">
+                <div class="metric-card" style="cursor: pointer;" @click="showToast('Exportando reporte...')">
+                    <div class="metric-icon" style="background: linear-gradient(135deg, #3b82f6, #1d4ed8); margin-bottom: 12px;">📄</div>
+                    <div style="font-weight: 700;">Exportar Reporte</div>
+                    <div style="font-size: 0.85rem; color: #64748b; margin-top: 4px;">PDF completo de métricas</div>
+                </div>
+                <div class="metric-card" style="cursor: pointer;" @click="showToast('Enviando alertas a conductores...')">
+                    <div class="metric-icon" style="background: linear-gradient(135deg, #f59e0b, #d97706); margin-bottom: 12px;">📱</div>
+                    <div style="font-weight: 700;">Alertas SMS</div>
+                    <div style="font-size: 0.85rem; color: #64748b; margin-top: 4px;">Notificar a conductores</div>
+                </div>
+                <div class="metric-card" style="cursor: pointer;" @click="showToast('Reubicando flota según heatmap...')">
+                    <div class="metric-icon" style="background: linear-gradient(135deg, #10b981, #059669); margin-bottom: 12px;">🗺️</div>
+                    <div style="font-weight: 700;">Reubicar Flota</div>
+                    <div style="font-size: 0.85rem; color: #64748b; margin-top: 4px;">Optimizar posiciones</div>
+                </div>
+                <div class="metric-card" style="cursor: pointer;" @click="showToast('Iniciando sesión de coaching...')">
+                    <div class="metric-icon" style="background: linear-gradient(135deg, #8b5cf6, #7c3aed); margin-bottom: 12px;">🎓</div>
+                    <div style="font-weight: 700;">Coaching Auto</div>
+                    <div style="font-size: 0.85rem; color: #64748b; margin-top: 4px;">Emparejar top/bottom</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Toast Notification -->
+    <div x-show="toast.visible" 
+         x-transition:enter="transition ease-out duration-300"
+         x-transition:enter-start="opacity-0 transform translate-y-2"
+         x-transition:enter-end="opacity-100 transform translate-y-0"
+         x-transition:leave="transition ease-in duration-300"
+         x-transition:leave-start="opacity-100 transform translate-y-0"
+         x-transition:leave-end="opacity-0 transform translate-y-2"
+         style="position: fixed; bottom: 32px; right: 32px; background: #0f172a; color: white; padding: 16px 24px; border-radius: 12px; box-shadow: 0 10px 25px rgba(0,0,0,0.2); z-index: 9999;"
+         x-text="toast.message">
+    </div>
+
+    <script>
+        function dashboard() {
+            return {
+                currentModule: 'dashboard',
+                activeVehicles: 8,
+                vehicles: [
+                    { id: 1, name: 'VTC-001', driver: 'Carlos M.', icon: '🚘', status: 'active', statusText: 'En servicio', performance: 94 },
+                    { id: 2, name: 'VTC-002', driver: 'Ana G.', icon: '🚘', status: 'active', statusText: 'En servicio', performance: 89 },
+                    { id: 3, name: 'VTC-003', driver: 'Miguel R.', icon: '🚘', status: 'warning', statusText: 'Bajo rendimiento', performance: 51 },
+                    { id: 4, name: 'VTC-004', driver: 'Laura P.', icon: '🚘', status: 'active', statusText: 'En servicio', performance: 92 },
+                    { id: 5, name: 'VTC-005', driver: 'David S.', icon: '🚘', status: 'offline', statusText: 'Desconectado', performance: 0 },
+                    { id: 6, name: 'VTC-006', driver: 'Sofia L.', icon: '🚘', status: 'active', statusText: 'En servicio', performance: 87 },
+                    { id: 7, name: 'VTC-007', driver: 'Jorge T.', icon: '🚘', status: 'warning', statusText: 'Bajo rendimiento', performance: 58 },
+                    { id: 8, name: 'VTC-008', driver: 'Elena M.', icon: '🚘', status: 'active', statusText: 'En servicio', performance: 91 },
+                    { id: 9, name: 'VTC-009', driver: 'Pablo N.', icon: '🚘', status: 'warning', statusText: 'Bajo rendimiento', performance: 62 },
+                    { id: 10, name: 'VTC-010', driver: 'Carmen V.', icon: '🚘', status: 'active', statusText: 'En servicio', performance: 88 }
+                ],
+                simulator: {
+                    vehicles: 10,
+                    drivers: 19,
+                    cancellations: 109,
+                    energyCost: 6000,
+                    lowPerformance: 49,
+                    unfulfilledHours: 5,
+                    results: null
+                },
+                notifications: [
+                    { id: 1, type: 'warning', icon: '⚠️', title: 'VTC-003 bajo rendimiento', message: '49% por debajo del promedio. Acción: Asignar coaching.', time: '2m' },
+                    { id: 2, type: 'success', icon: '✅', title: 'Objetivo de ingresos alcanzado', message: '95.6% del objetivo mensual completado.', time: '15m' },
+                    { id: 3, type: 'success', icon: '🎉', title: 'Ahorro récord', message: '€11,247 ahorrados este mes. Nueva proyección: €13,798.', time: '1h' }
+                ],
+                toast: {
+                    visible: false,
+                    message: ''
+                },
+                
+                formatCurrency(value) {
+                    return '€' + value.toLocaleString('es-ES', { minimumFractionDigits: 0, maximumFractionDigits: 0 });
+                },
+                
+                calculateSavings() {
+                    const s = this.simulator;
+                    
+                    // Cálculos basados en el caso real de VTC Alicante
+                    const cancellationSavings = s.cancellations * 25 * 0.66; // €25 por cancelación, 66% reducción
+                    const performanceSavings = (100 - s.lowPerformance) * 85; // €85 por punto de mejora
+                    const scheduleSavings = s.unfulfilledHours * 38; // €38 por hora no cumplida
+                    const heatmapSavings = s.vehicles * 783; // €783 por vehículo (caso real)
+                    const energySavings = s.energyCost * 0.10; // 10% ahorro energético
+                    
+                    const totalSavings = cancellationSavings + performanceSavings + scheduleSavings + heatmapSavings + energySavings;
+                    const roi = Math.round((totalSavings / 5000) * 100);
+                    const payback = Math.round(5000 / (totalSavings / 30));
+                    
+                    this.simulator.results = {
+                        cancellationSavings: Math.round(cancellationSavings),
+                        performanceSavings: Math.round(performanceSavings),
+                        scheduleSavings: Math.round(scheduleSavings),
+                        heatmapSavings: Math.round(heatmapSavings),
+                        energySavings: Math.round(energySavings),
+                        totalSavings: Math.round(totalSavings),
+                        roi: roi,
+                        payback: payback
+                    };
+                    
+                    this.showToast('✅ Cálculo completado: ' + this.formatCurrency(totalSavings) + '/mes');
+                },
+                
+                refreshData() {
+                    this.showToast('🔄 Datos actualizados');
+                    // Simular actualización de datos
+                    this.vehicles.forEach(v => {
+                        if (v.status !== 'offline') {
+                            v.performance = Math.min(100, Math.max(50, v.performance + (Math.random() * 10 - 5)));
+                        }
+                    });
+                },
+                
+                exportReport() {
+                    this.showToast('📄 Generando reporte PDF...');
+                    setTimeout(() => {
+                        this.showToast('✅ Reporte descargado');
+                    }, 2000);
+                },
+                
+                addNotification() {
+                    const types = [
+                        { type: 'warning', icon: '⚠️', title: 'Alerta de demanda', message: 'Alta demanda detectada en zona aeropuerto. Reubicar 3 vehículos.' },
+                        { type: 'success', icon: '✅', title: 'Conductor destacado', message: 'Carlos M. completó 25 viajes esta semana. Top performer.' },
+                        { type: 'warning', icon: '🔋', title: 'Carga baja', message: 'VTC-005 necesita recarga. 18% batería restante.' }
+                    ];
+                    const random = types[Math.floor(Math.random() * types.length)];
+                    this.notifications.unshift({
+                        id: Date.now(),
+                        ...random,
+                        time: 'Ahora'
+                    });
+                    if (this.notifications.length > 5) {
+                        this.notifications.pop();
+                    }
+                },
+                
+                showToast(message) {
+                    this.toast.message = message;
+                    this.toast.visible = true;
+                    setTimeout(() => {
+                        this.toast.visible = false;
+                    }, 3000);
+                }
+            }
+        }
+        
+        // Voice command simulation (demo)
+        document.addEventListener('keydown', function(e) {
+            if (e.ctrlKey && e.key === 'v') {
+                alert('🎤 Control por Voz activado\n\nComandos disponibles:\n- "mostrar métricas"\n- "exportar reporte"\n- "simular con 15 vehiculos"\n- "próxima cita"');
+            }
+        });
+    </script>
+</body>
+</html>

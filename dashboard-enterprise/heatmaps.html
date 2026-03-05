@@ -1,0 +1,289 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Zonas Calientes (Heatmaps) | VTC Dashboard Enterprise</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" />
+  <link rel="stylesheet" href="css/style.css">
+  <style>
+    .heatmap-controls { display: flex; gap: 12px; align-items: center; flex-wrap: wrap; }
+    .legend-gradient { width: 200px; height: 20px; background: linear-gradient(to right, #0000FF, #00FFFF, #00FF00, #FFFF00, #FF0000); border-radius: 4px; }
+    .legend-labels { display: flex; justify-content: space-between; font-size: 12px; color: var(--text-secondary); margin-top: 4px; }
+    .prediction-card { background: linear-gradient(135deg, var(--secondary) 0%, var(--accent) 100%); color: white; padding: 20px; border-radius: var(--radius-lg); }
+  </style>
+</head>
+<body>
+  <div class="app-container">
+    <aside class="sidebar" id="sidebar">
+      <div class="sidebar-header">
+        <div class="logo"><div class="logo-icon">🚖</div><span>VTC Alicante</span></div>
+        <button class="sidebar-toggle" id="sidebar-toggle"><i class="fas fa-chevron-left"></i></button>
+      </div>
+      <nav class="sidebar-nav">
+        <div class="nav-section">
+          <div class="nav-section-title">Principal</div>
+          <a href="index.html" class="nav-item"><span class="nav-item-icon"><i class="fas fa-home"></i></span><span>Dashboard</span></a>
+          <a href="drivers.html" class="nav-item"><span class="nav-item-icon"><i class="fas fa-users"></i></span><span>Conductores</span></a>
+          <a href="trips.html" class="nav-item"><span class="nav-item-icon"><i class="fas fa-route"></i></span><span>Viajes</span></a>
+        </div>
+        <div class="nav-section">
+          <div class="nav-section-title">Analíticas</div>
+          <a href="analytics.html" class="nav-item"><span class="nav-item-icon"><i class="fas fa-chart-line"></i></span><span>Analíticas</span></a>
+          <a href="heatmaps.html" class="nav-item active"><span class="nav-item-icon"><i class="fas fa-fire"></i></span><span>Zonas Calientes</span></a>
+        </div>
+        <div class="nav-section">
+          <div class="nav-section-title">Gestión</div>
+          <a href="notifications.html" class="nav-item"><span class="nav-item-icon"><i class="fas fa-bell"></i></span><span>Notificaciones</span></a>
+          <a href="settings.html" class="nav-item"><span class="nav-item-icon"><i class="fas fa-cog"></i></span><span>Configuración</span></a>
+        </div>
+      </nav>
+      <div class="sidebar-footer">
+        <a href="login.html" class="nav-item" style="color: var(--error);"><span class="nav-item-icon"><i class="fas fa-sign-out-alt"></i></span><span>Cerrar Sesión</span></a>
+      </div>
+    </aside>
+    
+    <main class="main-content" id="main-content">
+      <header class="header">
+        <div class="header-left"><h1 class="page-title">Zonas Calientes (Heatmaps)</h1></div>
+        <div class="header-right">
+          <div class="heatmap-controls">
+            <select class="form-select" id="heatmap-period" onchange="HeatmapsPage.changePeriod()">
+              <option value="24">Últimas 24 horas</option>
+              <option value="7" selected>Últimos 7 días</option>
+              <option value="30">Últimos 30 días</option>
+            </select>
+            <button class="btn btn-sm btn-secondary" onclick="HeatmapsPage.toggleLayer('demand')"><i class="fas fa-fire"></i> Demanda</button>
+            <button class="btn btn-sm btn-secondary" onclick="HeatmapsPage.toggleLayer('supply')"><i class="fas fa-car"></i> Oferta</button>
+            <button class="btn btn-sm btn-secondary" onclick="HeatmapsPage.toggleLayer('revenue')"><i class="fas fa-euro-sign"></i> Ingresos</button>
+            <button class="btn btn-sm btn-primary" onclick="HeatmapsPage.sendPushNotifications()"><i class="fas fa-bell"></i> Notificar Conductores</button>
+          </div>
+        </div>
+      </header>
+      
+      <div class="dashboard-content">
+        <!-- Prediction Card -->
+        <div class="prediction-card" style="margin-bottom: 24px;">
+          <div style="display: flex; justify-content: space-between; align-items: center;">
+            <div>
+              <h3 style="font-size: 18px; margin-bottom: 8px;">🔮 Predicción de Demanda - Próxima Hora</h3>
+              <p style="opacity: 0.9; font-size: 14px;">Basado en patrones históricos y eventos en tiempo real</p>
+            </div>
+            <div style="text-align: right;">
+              <div style="font-size: 32px; font-weight: 700;">+35%</div>
+              <div style="opacity: 0.9; font-size: 13px;">vs hora actual</div>
+            </div>
+          </div>
+          <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; margin-top: 16px;">
+            <div style="background: rgba(255,255,255,0.2); padding: 12px; border-radius: var(--radius-md);">
+              <div style="font-size: 12px; opacity: 0.8;">Zona Más Caliente</div>
+              <div style="font-weight: 600; font-size: 16px;">📍 Aeropuerto Alicante</div>
+            </div>
+            <div style="background: rgba(255,255,255,0.2); padding: 12px; border-radius: var(--radius-md);">
+              <div style="font-size: 12px; opacity: 0.8;">Demanda Estimada</div>
+              <div style="font-weight: 600; font-size: 16px;">🚖 45-60 viajes/hora</div>
+            </div>
+            <div style="background: rgba(255,255,255,0.2); padding: 12px; border-radius: var(--radius-md);">
+              <div style="font-size: 12px; opacity: 0.8;">Conductores Necesarios</div>
+              <div style="font-weight: 600; font-size: 16px;">👥 +12 conductores</div>
+            </div>
+          </div>
+        </div>
+        
+        <!-- Main Map -->
+        <div class="chart-container" style="padding: 0;">
+          <div class="chart-header" style="border-bottom: 1px solid var(--border-color);">
+            <h3 class="chart-title">Mapa de Calor de Demanda</h3>
+            <div style="display: flex; gap: 16px; align-items: center;">
+              <div>
+                <div style="font-size: 12px; color: var(--text-secondary); margin-bottom: 4px;">Intensidad</div>
+                <div class="legend-gradient"></div>
+                <div class="legend-labels">
+                  <span>Baja</span>
+                  <span>Media</span>
+                  <span>Alta</span>
+                  <span>Muy Alta</span>
+                  <span>Crítica</span>
+                </div>
+              </div>
+              <button class="btn btn-sm btn-secondary" onclick="HeatmapsPage.expandMap()"><i class="fas fa-expand"></i> Pantalla completa</button>
+            </div>
+          </div>
+          <div id="heatmap" style="height: 600px; width: 100%;"></div>
+        </div>
+        
+        <!-- Hot Zones List -->
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 24px; margin-top: 24px;">
+          <div class="table-container">
+            <div class="table-header">
+              <h3 class="table-title">🔥 Top 5 Zonas de Alta Demanda</h3>
+            </div>
+            <table class="data-table">
+              <thead><tr><th>#</th><th>Zona</th><th>Viajes/hora</th><th>Ingreso Promedio</th><th>Estado</th></tr></thead>
+              <tbody>
+                <tr><td>1</td><td>Aeropuerto Alicante</td><td>18-25</td><td>€42.50</td><td><span class="status-badge error"><span class="status-dot"></span>Saturada</span></td></tr>
+                <tr><td>2</td><td>Centro Ciudad</td><td>12-18</td><td>€28.30</td><td><span class="status-badge warning"><span class="status-dot"></span>Alta</span></td></tr>
+                <tr><td>3</td><td>Playa de San Juan</td><td>8-12</td><td>€35.80</td><td><span class="status-badge warning"><span class="status-dot"></span>Alta</span></td></tr>
+                <tr><td>4</td><td>Estación Renfe</td><td>6-10</td><td>€38.20</td><td><span class="status-badge info"><span class="status-dot"></span>Media</span></td></tr>
+                <tr><td>5</td><td>Cabo de las Huertas</td><td>5-8</td><td>€32.50</td><td><span class="status-badge info"><span class="status-dot"></span>Media</span></td></tr>
+              </tbody>
+            </table>
+          </div>
+          
+          <div class="table-container">
+            <div class="table-header">
+              <h3 class="table-title">❄️ Zonas de Baja Demanda</h3>
+            </div>
+            <table class="data-table">
+              <thead><tr><th>#</th><th>Zona</th><th>Viajes/hora</th><th>Ingreso Promedio</th><th>Recomendación</th></tr></thead>
+              <tbody>
+                <tr><td>1</td><td>San Vicente del Raspeig</td><td>1-2</td><td>€18.50</td><td>Redistribuir</td></tr>
+                <tr><td>2</td><td>El Campello Norte</td><td>2-3</td><td>€22.30</td><td>Redistribuir</td></tr>
+                <tr><td>3</td><td>Universidad Alicante</td><td>2-4</td><td>€15.80</td><td>Esperar evento</td></tr>
+                <tr><td>4</td><td>Polígono Industrial</td><td>3-5</td><td>€25.60</td><td>Horario punta</td></tr>
+                <tr><td>5</td><td>Playa San Gabriel</td><td>3-5</td><td>€28.90</td><td>Estacional</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+        
+        <!-- Alerts & Recommendations -->
+        <div class="chart-container" style="margin-top: 24px;">
+          <div class="chart-header">
+            <h3 class="chart-title">⚡ Alertas y Recomendaciones en Tiempo Real</h3>
+          </div>
+          <div style="display: grid; gap: 12px;">
+            <div class="notification-item critical">
+              <div class="notification-header">
+                <span class="notification-type">🚨 ALERTA CRÍTICA</span>
+                <span class="notification-time">Ahora</span>
+              </div>
+              <div class="notification-message">
+                <strong>Aeropuerto Alicante saturado:</strong> 23 conductores esperando, demanda estimada 15 viajes/hora. 
+                <strong>Recomendación:</strong> Notificar a conductores para redistribuirse a Centro Ciudad o Playa de San Juan.
+              </div>
+              <div style="margin-top: 12px; display: flex; gap: 8px;">
+                <button class="btn btn-sm btn-primary" onclick="HeatmapsPage.sendZoneAlert('airport')"><i class="fas fa-bell"></i> Notificar Conductores</button>
+                <button class="btn btn-sm btn-secondary" onclick="HeatmapsPage.viewZoneDetails('airport')"><i class="fas fa-info-circle"></i> Ver Detalles</button>
+              </div>
+            </div>
+            
+            <div class="notification-item high">
+              <div class="notification-header">
+                <span class="notification-type">⚠️ ALERTA ALTA</span>
+                <span class="notification-time">Hace 15 min</span>
+              </div>
+              <div class="notification-message">
+                <strong>Evento detectado - Centro Ciudad:</strong> Concentración inusual de solicitudes. Posible evento en Plaza del Ayuntamiento.
+                <strong>Recomendación:</strong> Desplazar 5-8 conductores adicionales a la zona.
+              </div>
+            </div>
+            
+            <div class="notification-item medium">
+              <div class="notification-header">
+                <span class="notification-type">💡 RECOMENDACIÓN</span>
+                <span class="notification-time">Hace 1 hora</span>
+              </div>
+              <div class="notification-message">
+                <strong>Predicción nocturna:</strong> Se espera alta demanda en zona de bares (Calle Mayor) entre 23:00-03:00.
+                <strong>Recomendación:</strong> Planificar turnos nocturnos con 10+ conductores.
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </main>
+  </div>
+  
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <script src="https://leaflet.github.io/Leaflet.heat/dist/leaflet-heat.js"></script>
+  <script src="js/app.js"></script>
+  <script>
+    const HeatmapsPage = {
+      map: null,
+      heatmapLayer: null,
+      currentPeriod: '7',
+      
+      init() {
+        this.map = L.map('heatmap').setView([38.3452, -0.4810], 13);
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+          attribution: '© OpenStreetMap',
+          opacity: 0.6
+        }).addTo(this.map);
+        
+        this.renderHeatmap();
+      },
+      
+      renderHeatmap() {
+        // Mock heatmap data for demo
+        const heatData = [
+          [38.3452, -0.4810, 0.8], // Centro
+          [38.2897, -0.4877, 1.0], // Aeropuerto
+          [38.3652, -0.4650, 0.6], // Playa San Juan
+          [38.3352, -0.4950, 0.5], // Estación Renfe
+          [38.3752, -0.4550, 0.4], // Cabo Huertas
+          [38.3552, -0.4710, 0.7], // Centro 2
+          [38.2997, -0.4777, 0.6], // Aeropuerto zona 2
+          [38.3402, -0.4860, 0.5], // Mercado
+          [38.3502, -0.4760, 0.6], // Teatro
+          [38.3302, -0.4910, 0.4]  // Puerto
+        ];
+        
+        if (this.heatmapLayer) {
+          this.map.removeLayer(this.heatmapLayer);
+        }
+        
+        this.heatmapLayer = L.heatLayer(heatData, {
+          radius: 25,
+          blur: 15,
+          maxZoom: 15,
+          gradient: {
+            0.0: '#0000FF',
+            0.25: '#00FFFF',
+            0.5: '#00FF00',
+            0.75: '#FFFF00',
+            1.0: '#FF0000'
+          }
+        }).addTo(this.map);
+      },
+      
+      changePeriod() {
+        this.currentPeriod = document.getElementById('heatmap-period').value;
+        console.log('[HeatmapsPage] Period changed to:', this.currentPeriod);
+        this.renderHeatmap();
+      },
+      
+      toggleLayer(type) {
+        console.log('[HeatmapsPage] Toggle layer:', type);
+        // Implement layer toggle logic
+      },
+      
+      sendPushNotifications() {
+        alert('📱 Notificaciones push enviadas a 28 conductores:\n\n"🔥 Alta demanda detectada en Aeropuerto Alicante.\n💰 Ingreso promedio: €42.50/viaje\n⏱️ Tiempo estimado espera: <5 min\n\n¡Muévete ahora para maximizar ingresos!"');
+      },
+      
+      sendZoneAlert(zone) {
+        console.log('[HeatmapsPage] Sending alert for zone:', zone);
+        this.sendPushNotifications();
+      },
+      
+      viewZoneDetails(zone) {
+        console.log('[HeatmapsPage] Viewing zone details:', zone);
+      },
+      
+      expandMap() {
+        document.getElementById('heatmap').style.height = 'calc(100vh - 200px)';
+        setTimeout(() => this.map.invalidateSize(), 100);
+      }
+    };
+    
+    window.HeatmapsPage = HeatmapsPage;
+    document.addEventListener('DOMContentLoaded', () => HeatmapsPage.init());
+  </script>
+</body>
+</html>

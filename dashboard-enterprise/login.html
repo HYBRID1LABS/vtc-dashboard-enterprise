@@ -1,0 +1,509 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Login | VTC Dashboard Enterprise</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700;800&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" />
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    
+    :root {
+      --bg-primary: #0F1115;
+      --bg-secondary: #161A1F;
+      --primary: #276EF1;
+      --primary-hover: #1E5BC7;
+      --text-primary: #FFFFFF;
+      --text-secondary: #A0A8B3;
+      --border-color: #2A2F36;
+      --error: #FF5252;
+      --success: #00C897;
+    }
+    
+    body {
+      font-family: 'Inter', sans-serif;
+      background: var(--bg-primary);
+      color: var(--text-primary);
+      min-height: 100vh;
+      display: flex;
+    }
+    
+    .login-left {
+      flex: 1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 40px;
+      background: linear-gradient(135deg, var(--bg-primary) 0%, var(--bg-secondary) 100%);
+    }
+    
+    .login-right {
+      width: 50%;
+      background: linear-gradient(135deg, var(--primary) 0%, #1E40AF 100%);
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      padding: 60px;
+      position: relative;
+      overflow: hidden;
+    }
+    
+    .login-right::before {
+      content: '';
+      position: absolute;
+      top: -50%;
+      right: -50%;
+      width: 100%;
+      height: 100%;
+      background: radial-gradient(circle, rgba(255,255,255,0.1) 0%, transparent 70%);
+      border-radius: 50%;
+    }
+    
+    .login-form {
+      width: 100%;
+      max-width: 420px;
+    }
+    
+    .logo {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      font-family: 'Montserrat', sans-serif;
+      font-weight: 700;
+      font-size: 24px;
+      margin-bottom: 40px;
+    }
+    
+    .logo-icon {
+      width: 48px;
+      height: 48px;
+      background: linear-gradient(135deg, var(--primary) 0%, #60A5FA 100%);
+      border-radius: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 24px;
+    }
+    
+    .login-title {
+      font-family: 'Montserrat', sans-serif;
+      font-size: 32px;
+      font-weight: 700;
+      margin-bottom: 8px;
+    }
+    
+    .login-subtitle {
+      color: var(--text-secondary);
+      font-size: 16px;
+      margin-bottom: 32px;
+    }
+    
+    .form-group {
+      margin-bottom: 24px;
+    }
+    
+    .form-label {
+      display: block;
+      font-size: 14px;
+      font-weight: 500;
+      margin-bottom: 8px;
+      color: var(--text-primary);
+    }
+    
+    .form-input {
+      width: 100%;
+      padding: 14px 16px;
+      background: var(--bg-secondary);
+      border: 1px solid var(--border-color);
+      border-radius: 8px;
+      font-size: 15px;
+      color: var(--text-primary);
+      transition: all 0.2s;
+    }
+    
+    .form-input:focus {
+      outline: none;
+      border-color: var(--primary);
+      box-shadow: 0 0 0 3px rgba(39, 110, 241, 0.1);
+    }
+    
+    .form-input::placeholder {
+      color: var(--text-secondary);
+    }
+    
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      padding: 14px 28px;
+      border-radius: 8px;
+      font-size: 15px;
+      font-weight: 600;
+      border: none;
+      cursor: pointer;
+      transition: all 0.2s;
+      width: 100%;
+    }
+    
+    .btn-primary {
+      background: var(--primary);
+      color: white;
+    }
+    
+    .btn-primary:hover {
+      background: var(--primary-hover);
+      transform: translateY(-1px);
+    }
+    
+    .btn-primary:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
+      transform: none;
+    }
+    
+    .divider {
+      display: flex;
+      align-items: center;
+      margin: 24px 0;
+      color: var(--text-secondary);
+      font-size: 13px;
+    }
+    
+    .divider::before,
+    .divider::after {
+      content: '';
+      flex: 1;
+      height: 1px;
+      background: var(--border-color);
+    }
+    
+    .divider span {
+      padding: 0 16px;
+    }
+    
+    .social-login {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+    }
+    
+    .btn-social {
+      background: var(--bg-secondary);
+      border: 1px solid var(--border-color);
+      color: var(--text-primary);
+      padding: 12px;
+      border-radius: 8px;
+      font-size: 14px;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all 0.2s;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+    }
+    
+    .btn-social:hover {
+      background: var(--bg-primary);
+      border-color: var(--text-secondary);
+    }
+    
+    .forgot-password {
+      text-align: right;
+      margin-top: -16px;
+      margin-bottom: 24px;
+    }
+    
+    .forgot-password a {
+      color: var(--primary);
+      font-size: 14px;
+      text-decoration: none;
+    }
+    
+    .forgot-password a:hover {
+      text-decoration: underline;
+    }
+    
+    .remember-me {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 24px;
+    }
+    
+    .remember-me input[type="checkbox"] {
+      width: 18px;
+      height: 18px;
+      accent-color: var(--primary);
+      cursor: pointer;
+    }
+    
+    .remember-me label {
+      font-size: 14px;
+      color: var(--text-secondary);
+      cursor: pointer;
+    }
+    
+    .right-content {
+      color: white;
+      position: relative;
+      z-index: 1;
+    }
+    
+    .right-content h2 {
+      font-family: 'Montserrat', sans-serif;
+      font-size: 42px;
+      font-weight: 700;
+      margin-bottom: 16px;
+      line-height: 1.2;
+    }
+    
+    .right-content p {
+      font-size: 18px;
+      opacity: 0.9;
+      line-height: 1.6;
+      margin-bottom: 32px;
+    }
+    
+    .feature-list {
+      list-style: none;
+    }
+    
+    .feature-list li {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 16px;
+      font-size: 16px;
+    }
+    
+    .feature-list li i {
+      width: 24px;
+      height: 24px;
+      background: rgba(255,255,255,0.2);
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 12px;
+    }
+    
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 24px;
+      margin-top: 40px;
+      padding-top: 40px;
+      border-top: 1px solid rgba(255,255,255,0.2);
+    }
+    
+    .stat-item {
+      text-align: center;
+    }
+    
+    .stat-value {
+      font-size: 32px;
+      font-weight: 700;
+      margin-bottom: 4px;
+    }
+    
+    .stat-label {
+      font-size: 14px;
+      opacity: 0.8;
+    }
+    
+    .alert {
+      padding: 14px 16px;
+      border-radius: 8px;
+      margin-bottom: 24px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      font-size: 14px;
+    }
+    
+    .alert-error {
+      background: rgba(255, 82, 82, 0.1);
+      border: 1px solid var(--error);
+      color: var(--error);
+    }
+    
+    .alert-success {
+      background: rgba(0, 200, 151, 0.1);
+      border: 1px solid var(--success);
+      color: var(--success);
+    }
+    
+    @media (max-width: 1024px) {
+      .login-right {
+        display: none;
+      }
+      .login-left {
+        width: 100%;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="login-left">
+    <div class="login-form">
+      <div class="logo">
+        <div class="logo-icon">🚖</div>
+        <span>VTC Alicante</span>
+      </div>
+      
+      <h1 class="login-title">Bienvenido de nuevo</h1>
+      <p class="login-subtitle">Inicia sesión para acceder al dashboard enterprise</p>
+      
+      <div id="login-alert"></div>
+      
+      <form id="login-form" onsubmit="LoginPage.handleLogin(event)">
+        <div class="form-group">
+          <label class="form-label">Email</label>
+          <input type="email" class="form-input" placeholder="tu@empresa.com" value="admin@vtcalicante.com" required>
+        </div>
+        
+        <div class="form-group">
+          <label class="form-label">Contraseña</label>
+          <input type="password" class="form-input" placeholder="••••••••" value="admin123" required>
+        </div>
+        
+        <div class="forgot-password">
+          <a href="#" onclick="alert('Funcionalidad de recuperación de contraseña en desarrollo')">¿Olvidaste tu contraseña?</a>
+        </div>
+        
+        <div class="remember-me">
+          <input type="checkbox" id="remember" checked>
+          <label for="remember">Recordarme durante 30 días</label>
+        </div>
+        
+        <button type="submit" class="btn btn-primary" id="login-btn">
+          <span>Iniciar Sesión</span>
+          <i class="fas fa-arrow-right"></i>
+        </button>
+      </form>
+      
+      <div class="divider">
+        <span>o continúa con</span>
+      </div>
+      
+      <div class="social-login">
+        <button class="btn-social" onclick="LoginPage.socialLogin('google')">
+          <i class="fab fa-google"></i> Google
+        </button>
+        <button class="btn-social" onclick="LoginPage.socialLogin('microsoft')">
+          <i class="fab fa-microsoft"></i> Microsoft
+        </button>
+      </div>
+      
+      <p style="text-align: center; margin-top: 32px; color: var(--text-secondary); font-size: 14px;">
+        ¿No tienes cuenta? <a href="#" style="color: var(--primary); text-decoration: none; font-weight: 500;" onclick="alert('Contacta con el administrador para crear una cuenta')">Contactar administrador</a>
+      </p>
+    </div>
+  </div>
+  
+  <div class="login-right">
+    <div class="right-content">
+      <h2>Gestiona tu flota VTC como un profesional</h2>
+      <p>El dashboard enterprise más completo para empresas de transporte VTC. Control total en tiempo real.</p>
+      
+      <ul class="feature-list">
+        <li><i class="fas fa-check"></i> Gestión de conductores en tiempo real</li>
+        <li><i class="fas fa-check"></i> Seguimiento de viajes y rutas</li>
+        <li><i class="fas fa-check"></i> Analíticas y reportes avanzados</li>
+        <li><i class="fas fa-check"></i> Mapas de calor de demanda</li>
+        <li><i class="fas fa-check"></i> Integración completa con Uber API</li>
+      </ul>
+      
+      <div class="stats-grid">
+        <div class="stat-item">
+          <div class="stat-value">50+</div>
+          <div class="stat-label">Conductores</div>
+        </div>
+        <div class="stat-item">
+          <div class="stat-value">1.2K</div>
+          <div class="stat-label">Viajes/mes</div>
+        </div>
+        <div class="stat-item">
+          <div class="stat-value">€45K</div>
+          <div class="stat-label">Ingresos/mes</div>
+        </div>
+      </div>
+    </div>
+  </div>
+  
+  <script>
+    const LoginPage = {
+      async handleLogin(event) {
+        event.preventDefault();
+        
+        const btn = document.getElementById('login-btn');
+        const alertDiv = document.getElementById('login-alert');
+        
+        // UI loading state
+        btn.disabled = true;
+        btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Iniciando sesión...';
+        alertDiv.innerHTML = '';
+        
+        try {
+          // Simulate API call
+          await new Promise(resolve => setTimeout(resolve, 1500));
+          
+          // Mock successful login
+          const formData = new FormData(event.target);
+          const email = formData.get('email') || event.target.querySelector('input[type="email"]').value;
+          
+          // Store auth token
+          localStorage.setItem('vtc_auth_token', 'mock_jwt_token_' + Date.now());
+          localStorage.setItem('vtc_user_email', email);
+          
+          // Show success
+          alertDiv.innerHTML = `
+            <div class="alert alert-success">
+              <i class="fas fa-check-circle"></i>
+              <span>¡Inicio de sesión exitoso! Redirigiendo...</span>
+            </div>
+          `;
+          
+          // Redirect to dashboard
+          setTimeout(() => {
+            window.location.href = 'index.html';
+          }, 1000);
+          
+        } catch (error) {
+          alertDiv.innerHTML = `
+            <div class="alert alert-error">
+              <i class="fas fa-exclamation-circle"></i>
+              <span>Error de autenticación. Verifica tus credenciales.</span>
+            </div>
+          `;
+          btn.disabled = false;
+          btn.innerHTML = '<span>Iniciar Sesión</span><i class="fas fa-arrow-right"></i>';
+        }
+      },
+      
+      socialLogin(provider) {
+        console.log('[LoginPage] Social login with:', provider);
+        alert(`🔐 Autenticación con ${provider === 'google' ? 'Google' : 'Microsoft'}\n\nEsta funcionalidad requiere configuración OAuth en el backend.\n\nPor ahora, usa las credenciales por defecto:\nEmail: admin@vtcalicante.com\nContraseña: admin123`);
+      },
+      
+      checkAuth() {
+        const token = localStorage.getItem('vtc_auth_token');
+        if (token) {
+          console.log('[LoginPage] User already authenticated');
+          window.location.href = 'index.html';
+        }
+      }
+    };
+    
+    window.LoginPage = LoginPage;
+    
+    // Check auth on page load
+    LoginPage.checkAuth();
+  </script>
+</body>
+</html>

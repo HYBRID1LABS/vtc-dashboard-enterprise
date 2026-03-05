@@ -1,0 +1,330 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>VTC Dashboard Enterprise | Hybrid Labs</title>
+  
+  <!-- Meta tags -->
+  <meta name="description" content="VTC Dashboard Enterprise - Professional VTC Management System">
+  <meta name="theme-color" content="#276EF1">
+  
+  <!-- Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700;800&family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  
+  <!-- Leaflet CSS -->
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="" />
+  
+  <!-- Chart.js -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+  
+  <!-- FontAwesome Icons -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" />
+  
+  <!-- Custom CSS -->
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+  <div class="app-container">
+    <!-- Sidebar -->
+    <aside class="sidebar" id="sidebar">
+      <div class="sidebar-header">
+        <div class="logo">
+          <div class="logo-icon">🚖</div>
+          <span>VTC Alicante</span>
+        </div>
+        <button class="sidebar-toggle" id="sidebar-toggle">
+          <i class="fas fa-chevron-left"></i>
+        </button>
+      </div>
+      
+      <nav class="sidebar-nav">
+        <div class="nav-section">
+          <div class="nav-section-title">Principal</div>
+          <a href="index.html" class="nav-item active">
+            <span class="nav-item-icon"><i class="fas fa-home"></i></span>
+            <span data-i18n="dashboard">Dashboard</span>
+          </a>
+          <a href="drivers.html" class="nav-item">
+            <span class="nav-item-icon"><i class="fas fa-users"></i></span>
+            <span data-i18n="drivers">Conductores</span>
+          </a>
+          <a href="trips.html" class="nav-item">
+            <span class="nav-item-icon"><i class="fas fa-route"></i></span>
+            <span data-i18n="trips">Viajes</span>
+          </a>
+        </div>
+        
+        <div class="nav-section">
+          <div class="nav-section-title">Analíticas</div>
+          <a href="analytics.html" class="nav-item">
+            <span class="nav-item-icon"><i class="fas fa-chart-line"></i></span>
+            <span data-i18n="analytics">Analíticas</span>
+          </a>
+          <a href="heatmaps.html" class="nav-item">
+            <span class="nav-item-icon"><i class="fas fa-fire"></i></span>
+            <span data-i18n="heatmaps">Zonas Calientes</span>
+            <span class="nav-item-badge">NEW</span>
+          </a>
+        </div>
+        
+        <div class="nav-section">
+          <div class="nav-section-title">Gestión</div>
+          <a href="notifications.html" class="nav-item">
+            <span class="nav-item-icon"><i class="fas fa-bell"></i></span>
+            <span data-i18n="notifications">Notificaciones</span>
+            <span class="nav-item-badge" id="notification-count">3</span>
+          </a>
+          <a href="settings.html" class="nav-item">
+            <span class="nav-item-icon"><i class="fas fa-cog"></i></span>
+            <span data-i18n="settings">Configuración</span>
+          </a>
+        </div>
+      </nav>
+      
+      <div class="sidebar-footer">
+        <a href="login.html" class="nav-item" style="color: var(--error);">
+          <span class="nav-item-icon"><i class="fas fa-sign-out-alt"></i></span>
+          <span data-i18n="logout">Cerrar Sesión</span>
+        </a>
+      </div>
+    </aside>
+    
+    <!-- Main Content -->
+    <main class="main-content" id="main-content">
+      <!-- Header -->
+      <header class="header">
+        <div class="header-left">
+          <h1 class="page-title" data-i18n="dashboard">Dashboard</h1>
+        </div>
+        
+        <div class="header-right">
+          <button class="header-action" id="theme-toggle">
+            <i class="fas fa-moon"></i>
+            <span>Tema</span>
+          </button>
+          
+          <div class="notification-bell" id="notification-bell">
+            <i class="fas fa-bell" style="font-size: 20px; color: var(--text-secondary);"></i>
+            <span class="notification-badge"></span>
+          </div>
+          
+          <div class="user-menu">
+            <div class="user-avatar">FT</div>
+            <div class="user-info">
+              <span class="user-name">Francisco Tenorio</span>
+              <span class="user-role">Admin</span>
+            </div>
+          </div>
+        </div>
+      </header>
+      
+      <!-- Dashboard Content -->
+      <div class="dashboard-content">
+        <!-- Metrics Grid -->
+        <div class="metrics-grid">
+          <div class="metric-card">
+            <div class="metric-header">
+              <span class="metric-title" data-i18n="totalRevenue">Ingresos Totales</span>
+              <div class="metric-icon primary">
+                <i class="fas fa-euro-sign"></i>
+              </div>
+            </div>
+            <div class="metric-value" id="metric-revenue">€0.00</div>
+            <div class="metric-change positive">
+              <i class="fas fa-arrow-up"></i>
+              <span>+12.5% vs mes anterior</span>
+            </div>
+          </div>
+          
+          <div class="metric-card">
+            <div class="metric-header">
+              <span class="metric-title" data-i18n="totalTrips">Viajes Totales</span>
+              <div class="metric-icon success">
+                <i class="fas fa-route"></i>
+              </div>
+            </div>
+            <div class="metric-value" id="metric-trips">0</div>
+            <div class="metric-change positive">
+              <i class="fas fa-arrow-up"></i>
+              <span>+8.3% vs mes anterior</span>
+            </div>
+          </div>
+          
+          <div class="metric-card">
+            <div class="metric-header">
+              <span class="metric-title" data-i18n="activeDrivers">Conductores Activos</span>
+              <div class="metric-icon warning">
+                <i class="fas fa-users"></i>
+              </div>
+            </div>
+            <div class="metric-value" id="metric-drivers">0</div>
+            <div class="metric-change positive">
+              <i class="fas fa-arrow-up"></i>
+              <span>+3 nuevos esta semana</span>
+            </div>
+          </div>
+          
+          <div class="metric-card">
+            <div class="metric-header">
+              <span class="metric-title" data-i18n="avgTicket">Ticket Promedio</span>
+              <div class="metric-icon info">
+                <i class="fas fa-receipt"></i>
+              </div>
+            </div>
+            <div class="metric-value" id="metric-ticket">€0.00</div>
+            <div class="metric-change negative">
+              <i class="fas fa-arrow-down"></i>
+              <span>-2.1% vs mes anterior</span>
+            </div>
+          </div>
+        </div>
+        
+        <!-- Charts Row -->
+        <div style="display: grid; grid-template-columns: 2fr 1fr; gap: 24px; margin-bottom: 24px;">
+          <div class="chart-container">
+            <div class="chart-header">
+              <h3 class="chart-title">Producción del Mes</h3>
+              <select class="form-select" style="width: auto; padding: 6px 12px;">
+                <option>Últimos 7 días</option>
+                <option selected>Últimos 30 días</option>
+                <option>Últimos 90 días</option>
+              </select>
+            </div>
+            <div style="height: 300px;">
+              <canvas id="revenueChart"></canvas>
+            </div>
+          </div>
+          
+          <div class="chart-container">
+            <div class="chart-header">
+              <h3 class="chart-title">Distribución de Viajes</h3>
+            </div>
+            <div style="height: 300px;">
+              <canvas id="tripsDoughnut"></canvas>
+            </div>
+          </div>
+        </div>
+        
+        <!-- Map & Active Trips -->
+        <div style="display: grid; grid-template-columns: 2fr 1fr; gap: 24px; margin-bottom: 24px;">
+          <div class="chart-container" style="padding: 0;">
+            <div class="chart-header" style="border-bottom: 1px solid var(--border-color); margin-bottom: 0; padding: 20px;">
+              <h3 class="chart-title">Mapa en Tiempo Real</h3>
+              <div style="display: flex; gap: 8px;">
+                <button class="btn btn-sm btn-secondary">
+                  <i class="fas fa-layer-group"></i> Capas
+                </button>
+                <button class="btn btn-sm btn-secondary">
+                  <i class="fas fa-expand"></i> Pantalla completa
+                </button>
+              </div>
+            </div>
+            <div id="map" style="height: 400px; width: 100%;"></div>
+          </div>
+          
+          <div class="table-container">
+            <div class="table-header">
+              <h3 class="table-title">Viajes Activos</h3>
+              <a href="trips.html" class="btn btn-sm btn-secondary">Ver todos</a>
+            </div>
+            <div id="trips-list" style="max-height: 400px; overflow-y: auto;">
+              <!-- Trips will be loaded here -->
+            </div>
+          </div>
+        </div>
+        
+        <!-- Drivers Table -->
+        <div class="table-container">
+          <div class="table-header">
+            <h3 class="table-title">Conductores</h3>
+            <div class="table-actions">
+              <input type="text" class="form-input" placeholder="Buscar conductor..." style="width: 200px; padding: 8px 12px;">
+              <button class="btn btn-sm btn-secondary">
+                <i class="fas fa-filter"></i> Filtrar
+              </button>
+              <button class="btn btn-sm btn-primary">
+                <i class="fas fa-plus"></i> Añadir
+              </button>
+            </div>
+          </div>
+          <div id="drivers-list" style="overflow-x: auto;">
+            <!-- Drivers will be loaded here -->
+          </div>
+        </div>
+      </div>
+    </main>
+  </div>
+  
+  <!-- Notifications Panel -->
+  <div class="notifications-panel" id="notifications-panel">
+    <div class="notifications-header">
+      <h3 class="notifications-title" data-i18n="notifications">Notificaciones</h3>
+      <button class="modal-close" onclick="NotificationManager.close()">×</button>
+    </div>
+    <div class="notifications-list" id="notifications-list">
+      <!-- Notifications will be loaded here -->
+    </div>
+  </div>
+  
+  <!-- Leaflet JS -->
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+  
+  <!-- App JS -->
+  <script src="js/app.js"></script>
+  
+  <!-- Dashboard-specific JS -->
+  <script>
+    // Initialize charts when page loads
+    document.addEventListener('DOMContentLoaded', function() {
+      // Revenue Line Chart
+      const revenueCtx = document.getElementById('revenueChart');
+      if (revenueCtx) {
+        const revenueData = {
+          labels: ['1 Mar', '5 Mar', '10 Mar', '15 Mar', '20 Mar', '25 Mar', '30 Mar', '1 Abr', '5 Abr', '10 Abr', '15 Abr', '20 Abr', '25 Abr', '30 Abr'],
+          datasets: [{
+            label: 'Ingresos (€)',
+            data: [450, 520, 480, 610, 590, 670, 720, 680, 750, 820, 790, 860, 920, 890],
+            borderColor: '#276EF1',
+            backgroundColor: 'rgba(39, 110, 241, 0.1)',
+            fill: true,
+            tension: 0.4
+          }]
+        };
+        
+        ChartManager.createLineChart('revenueChart', revenueData, {
+          showLegend: false,
+          beginAtZero: true
+        });
+      }
+      
+      // Trips Doughnut Chart
+      const tripsCtx = document.getElementById('tripsDoughnut');
+      if (tripsCtx) {
+        const tripsData = {
+          labels: ['Completados', 'En curso', 'Cancelados', 'Programados'],
+          datasets: [{
+            data: [285, 12, 8, 37],
+            backgroundColor: [
+              '#00C897',
+              '#FFB800',
+              '#FF5252',
+              '#276EF1'
+            ],
+            borderWidth: 0
+          }]
+        };
+        
+        ChartManager.createDoughnutChart('tripsDoughnut', tripsData);
+      }
+      
+      // Initialize map
+      if (document.getElementById('map')) {
+        MapManager.init('map');
+      }
+    });
+  </script>
+</body>
+</html>

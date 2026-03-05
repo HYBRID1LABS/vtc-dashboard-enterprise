@@ -1,0 +1,320 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Notificaciones e Incidencias | VTC Dashboard Enterprise</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" />
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+  <div class="app-container">
+    <aside class="sidebar" id="sidebar">
+      <div class="sidebar-header">
+        <div class="logo"><div class="logo-icon">🚖</div><span>VTC Alicante</span></div>
+        <button class="sidebar-toggle" id="sidebar-toggle"><i class="fas fa-chevron-left"></i></button>
+      </div>
+      <nav class="sidebar-nav">
+        <div class="nav-section">
+          <div class="nav-section-title">Principal</div>
+          <a href="index.html" class="nav-item"><span class="nav-item-icon"><i class="fas fa-home"></i></span><span>Dashboard</span></a>
+          <a href="drivers.html" class="nav-item"><span class="nav-item-icon"><i class="fas fa-users"></i></span><span>Conductores</span></a>
+          <a href="trips.html" class="nav-item"><span class="nav-item-icon"><i class="fas fa-route"></i></span><span>Viajes</span></a>
+        </div>
+        <div class="nav-section">
+          <div class="nav-section-title">Analíticas</div>
+          <a href="analytics.html" class="nav-item"><span class="nav-item-icon"><i class="fas fa-chart-line"></i></span><span>Analíticas</span></a>
+          <a href="heatmaps.html" class="nav-item"><span class="nav-item-icon"><i class="fas fa-fire"></i></span><span>Zonas Calientes</span></a>
+        </div>
+        <div class="nav-section">
+          <div class="nav-section-title">Gestión</div>
+          <a href="notifications.html" class="nav-item active"><span class="nav-item-icon"><i class="fas fa-bell"></i></span><span>Notificaciones</span></a>
+          <a href="settings.html" class="nav-item"><span class="nav-item-icon"><i class="fas fa-cog"></i></span><span>Configuración</span></a>
+        </div>
+      </nav>
+      <div class="sidebar-footer">
+        <a href="login.html" class="nav-item" style="color: var(--error);"><span class="nav-item-icon"><i class="fas fa-sign-out-alt"></i></span><span>Cerrar Sesión</span></a>
+      </div>
+    </aside>
+    
+    <main class="main-content" id="main-content">
+      <header class="header">
+        <div class="header-left"><h1 class="page-title">Notificaciones e Incidencias</h1></div>
+        <div class="header-right">
+          <button class="btn btn-sm btn-secondary" onclick="NotificationsPage.markAllRead()"><i class="fas fa-check-double"></i> Marcar todas leídas</button>
+          <button class="btn btn-primary" onclick="NotificationsPage.openNewTicketModal()"><i class="fas fa-plus"></i> Nueva Incidencia</button>
+        </div>
+      </header>
+      
+      <div class="dashboard-content">
+        <!-- Stats -->
+        <div class="metrics-grid" style="margin-bottom: 24px;">
+          <div class="metric-card">
+            <div class="metric-header">
+              <span class="metric-title">Notificaciones Sin Leer</span>
+              <div class="metric-icon warning"><i class="fas fa-bell"></i></div>
+            </div>
+            <div class="metric-value">12</div>
+          </div>
+          <div class="metric-card">
+            <div class="metric-header">
+              <span class="metric-title">Incidencias Activas</span>
+              <div class="metric-icon error"><i class="fas fa-exclamation-triangle"></i></div>
+            </div>
+            <div class="metric-value">5</div>
+          </div>
+          <div class="metric-card">
+            <div class="metric-header">
+              <span class="metric-title">Tickets Críticos</span>
+              <div class="metric-icon info"><i class="fas fa-fire"></i></div>
+            </div>
+            <div class="metric-value">2</div>
+          </div>
+          <div class="metric-card">
+            <div class="metric-header">
+              <span class="metric-title">Resueltas (Semana)</span>
+              <div class="metric-icon success"><i class="fas fa-check-circle"></i></div>
+            </div>
+            <div class="metric-value">28</div>
+          </div>
+        </div>
+        
+        <!-- Filters -->
+        <div class="table-container" style="margin-bottom: 24px;">
+          <div class="table-header">
+            <h3 class="table-title">Filtros</h3>
+          </div>
+          <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 16px; padding: 20px;">
+            <div class="form-group" style="margin-bottom: 0;">
+              <label class="form-label">Prioridad</label>
+              <select class="form-select" id="filter-priority">
+                <option value="">Todas</option>
+                <option value="critical">🔴 Crítico</option>
+                <option value="high">🟠 Alto</option>
+                <option value="medium">🔵 Medio</option>
+                <option value="low">🟢 Bajo</option>
+              </select>
+            </div>
+            <div class="form-group" style="margin-bottom: 0;">
+              <label class="form-label">Tipo</label>
+              <select class="form-select" id="filter-type">
+                <option value="">Todos</option>
+                <option value="battery">🔋 Batería Baja</option>
+                <option value="mechanical">🔧 Falla Mecánica</option>
+                <option value="traffic">🚗 Incidencia Tráfico</option>
+                <option value="accident">⚠️ Accidente</option>
+                <option value="fine">📋 Multa</option>
+                <option value="other">📝 Otro</option>
+              </select>
+            </div>
+            <div class="form-group" style="margin-bottom: 0;">
+              <label class="form-label">Estado</label>
+              <select class="form-select" id="filter-status">
+                <option value="">Todos</option>
+                <option value="open">Abierto</option>
+                <option value="in_progress">En Progreso</option>
+                <option value="resolved">Resuelto</option>
+                <option value="closed">Cerrado</option>
+              </select>
+            </div>
+          </div>
+        </div>
+        
+        <!-- Notifications List -->
+        <div class="notifications-list" id="notifications-list" style="max-height: none;">
+          <div class="notification-item critical">
+            <div class="notification-header">
+              <span class="notification-type">🔋 BATERÍA BAJA - CRÍTICO</span>
+              <span class="notification-time">Hace 5 min</span>
+            </div>
+            <div class="notification-message">
+              <strong>Carlos Martínez (Toyota Prius - 1234 ABC)</strong> reporta batería al 12%. 
+              <br>Ubicación: Av. Maisonnave, Centro Ciudad.
+              <br><strong>Acción requerida:</strong> Enviar asistencia o permitir finalizar turno.
+            </div>
+            <div style="margin-top: 12px; display: flex; gap: 8px;">
+              <button class="btn btn-sm btn-primary"><i class="fas fa-phone"></i> Llamar</button>
+              <button class="btn btn-sm btn-secondary"><i class="fas fa-map-marker-alt"></i> Ver Ubicación</button>
+              <button class="btn btn-sm btn-success"><i class="fas fa-check"></i> Marcar Resuelta</button>
+            </div>
+          </div>
+          
+          <div class="notification-item critical">
+            <div class="notification-header">
+              <span class="notification-type">⚠️ ACCIDENTE - CRÍTICO</span>
+              <span class="notification-time">Hace 23 min</span>
+            </div>
+            <div class="notification-message">
+              <strong>María López (Tesla Model 3 - 5678 DEF)</strong> reporta accidente leve.
+              <br>Ubicación: Ronda de la Universidad, cerca Centro Comercial.
+              <br><strong>Estado:</strong> Sin heridos, daños materiales. Esperando grúa.
+            </div>
+            <div style="margin-top: 12px; display: flex; gap: 8px;">
+              <button class="btn btn-sm btn-primary"><i class="fas fa-phone"></i> Llamar</button>
+              <button class="btn btn-sm btn-secondary"><i class="fas fa-car-crash"></i> Reporte Seguros</button>
+              <button class="btn btn-sm btn-info"><i class="fas fa-eye"></i> Ver Detalles</button>
+            </div>
+          </div>
+          
+          <div class="notification-item high">
+            <div class="notification-header">
+              <span class="notification-type">🔧 FALLA MECÁNICA - ALTO</span>
+              <span class="notification-time">Hace 1 hora</span>
+            </div>
+            <div class="notification-message">
+              <strong>José García (Mercedes V-Class - 9012 GHI)</strong> reporta fallo en frenos.
+              <br>Ubicación: Taller Motors Alicante, Ctra. Valencia.
+              <br><strong>Estado:</strong> Vehículo en taller, estimado reparación: 2-3 horas.
+            </div>
+            <div style="margin-top: 12px; display: flex; gap: 8px;">
+              <button class="btn btn-sm btn-secondary"><i class="fas fa-wrench"></i> Ver Taller</button>
+              <button class="btn btn-sm btn-secondary"><i class="fas fa-calendar"></i> Reasignar Turno</button>
+            </div>
+          </div>
+          
+          <div class="notification-item high">
+            <div class="notification-header">
+              <span class="notification-type">🚗 INCIDENCIA TRÁFICO - ALTO</span>
+              <span class="notification-time">Hace 2 horas</span>
+            </div>
+            <div class="notification-message">
+              <strong>Accidente múltiple</strong> en Av. de Denia, sentido Aeropuerto.
+              <br><strong>Impacto:</strong> 15 conductores afectados, retraso medio 25 min.
+              <br><strong>Recomendación:</strong> Redirigir conductores por Av. de Elche.
+            </div>
+            <div style="margin-top: 12px; display: flex; gap: 8px;">
+              <button class="btn btn-sm btn-primary"><i class="fas fa-bullhorn"></i> Notificar Conductores</button>
+              <button class="btn btn-sm btn-secondary"><i class="fas fa-map"></i> Ver Ruta Alternativa</button>
+            </div>
+          </div>
+          
+          <div class="notification-item medium">
+            <div class="notification-header">
+              <span class="notification-type">📋 MULTA / PUNTUACIÓN - MEDIO</span>
+              <span class="notification-time">Hace 4 horas</span>
+            </div>
+            <div class="notification-message">
+              <strong>Ana Sánchez</strong> recibe valoración 2.5⭐ de pasajero.
+              <br>Motivo: "Vehículo no estaba limpio, ruta más larga de lo necesario".
+              <br><strong>Acción:</strong> Notificación enviada, seguimiento requerido.
+            </div>
+            <div style="margin-top: 12px; display: flex; gap: 8px;">
+              <button class="btn btn-sm btn-secondary"><i class="fas fa-comment"></i> Contactar Conductor</button>
+              <button class="btn btn-sm btn-secondary"><i class="fas fa-clipboard-check"></i> Abrir Expediente</button>
+            </div>
+          </div>
+          
+          <div class="notification-item low">
+            <div class="notification-header">
+              <span class="notification-type">📝 RECORDATORIO - BAJO</span>
+              <span class="notification-time">Hace 6 horas</span>
+            </div>
+            <div class="notification-message">
+              <strong>Recordatorio de mantenimiento</strong> - 5 vehículos próximos a revisión ITV.
+              <br>Vehículos: 3 coches, 1 van, 1 premium.
+              <br><strong>Fecha límite:</strong> 15 Marzo 2026.
+            </div>
+            <div style="margin-top: 12px; display: flex; gap: 8px;">
+              <button class="btn btn-sm btn-secondary"><i class="fas fa-calendar-check"></i> Programar Citas</button>
+              <button class="btn btn-sm btn-secondary"><i class="fas fa-list"></i> Ver Lista</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </main>
+  </div>
+  
+  <!-- New Ticket Modal -->
+  <div class="modal-overlay" id="new-ticket-modal">
+    <div class="modal">
+      <div class="modal-header">
+        <h3 class="modal-title">Nueva Incidencia / Ticket</h3>
+        <button class="modal-close" onclick="NotificationsPage.closeNewTicketModal()">×</button>
+      </div>
+      <div class="modal-body">
+        <form id="new-ticket-form">
+          <div class="form-group">
+            <label class="form-label">Tipo de Incidencia *</label>
+            <select class="form-select" required>
+              <option value="">Seleccionar</option>
+              <option value="battery">🔋 Batería Baja</option>
+              <option value="mechanical">🔧 Falla Mecánica</option>
+              <option value="traffic">🚗 Incidencia Tráfico</option>
+              <option value="accident">⚠️ Accidente</option>
+              <option value="fine">📋 Multa</option>
+              <option value="other">📝 Otro</option>
+            </select>
+          </div>
+          
+          <div class="form-group">
+            <label class="form-label">Prioridad *</label>
+            <select class="form-select" required>
+              <option value="">Seleccionar</option>
+              <option value="critical">🔴 Crítico</option>
+              <option value="high">🟠 Alto</option>
+              <option value="medium">🔵 Medio</option>
+              <option value="low">🟢 Bajo</option>
+            </select>
+          </div>
+          
+          <div class="form-group">
+            <label class="form-label">Conductor Afectado</label>
+            <select class="form-select">
+              <option value="">Seleccionar (opcional)</option>
+              <option value="1">Carlos Martínez</option>
+              <option value="2">María López</option>
+              <option value="3">José García</option>
+              <option value="4">Ana Sánchez</option>
+            </select>
+          </div>
+          
+          <div class="form-group">
+            <label class="form-label">Ubicación</label>
+            <input type="text" class="form-input" placeholder="Dirección o punto de referencia">
+          </div>
+          
+          <div class="form-group">
+            <label class="form-label">Descripción *</label>
+            <textarea class="form-input" rows="4" required placeholder="Describe la incidencia con detalle..."></textarea>
+          </div>
+          
+          <div class="form-group">
+            <label class="form-label">Adjuntar Fotos (opcional)</label>
+            <input type="file" class="form-input" accept="image/*" multiple>
+          </div>
+        </form>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-secondary" onclick="NotificationsPage.closeNewTicketModal()">Cancelar</button>
+        <button class="btn btn-primary" onclick="NotificationsPage.submitTicket()">Crear Ticket</button>
+      </div>
+    </div>
+  </div>
+  
+  <script src="js/app.js"></script>
+  <script>
+    const NotificationsPage = {
+      init() { this.loadNotifications(); },
+      async loadNotifications() {
+        try {
+          const response = await API.getNotifications();
+          console.log('[NotificationsPage] Loaded:', response);
+        } catch (error) { console.error('[NotificationsPage] Error:', error); }
+      },
+      markAllRead() { console.log('[NotificationsPage] Mark all read'); },
+      openNewTicketModal() { document.getElementById('new-ticket-modal').classList.add('open'); },
+      closeNewTicketModal() { document.getElementById('new-ticket-modal').classList.remove('open'); },
+      submitTicket() {
+        console.log('[NotificationsPage] Submitting ticket...');
+        this.closeNewTicketModal();
+        alert('✅ Ticket creado exitosamente. Se ha notificado al equipo correspondiente.');
+      }
+    };
+    window.NotificationsPage = NotificationsPage;
+    document.addEventListener('DOMContentLoaded', () => NotificationsPage.init());
+  </script>
+</body>
+</html>

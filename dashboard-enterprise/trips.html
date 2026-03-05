@@ -1,0 +1,260 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Gestión de Viajes | VTC Dashboard Enterprise</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" />
+  <link rel="stylesheet" href="css/style.css">
+  <style>
+    .trip-timeline { position: relative; padding-left: 30px; }
+    .trip-timeline::before {
+      content: ''; position: absolute; left: 8px; top: 0; bottom: 0;
+      width: 2px; background: var(--border-color);
+    }
+    .timeline-item {
+      position: relative; padding-bottom: 20px;
+    }
+    .timeline-item::before {
+      content: ''; position: absolute; left: -26px; top: 4px;
+      width: 12px; height: 12px; border-radius: 50%;
+      background: var(--secondary); border: 2px solid var(--bg-card);
+    }
+    .timeline-item.completed::before { background: var(--success); }
+    .timeline-item.current::before {
+      background: var(--warning); animation: pulse 2s infinite;
+    }
+  </style>
+</head>
+<body>
+  <div class="app-container">
+    <aside class="sidebar" id="sidebar">
+      <div class="sidebar-header">
+        <div class="logo"><div class="logo-icon">🚖</div><span>VTC Alicante</span></div>
+        <button class="sidebar-toggle" id="sidebar-toggle"><i class="fas fa-chevron-left"></i></button>
+      </div>
+      <nav class="sidebar-nav">
+        <div class="nav-section">
+          <div class="nav-section-title">Principal</div>
+          <a href="index.html" class="nav-item"><span class="nav-item-icon"><i class="fas fa-home"></i></span><span>Dashboard</span></a>
+          <a href="drivers.html" class="nav-item"><span class="nav-item-icon"><i class="fas fa-users"></i></span><span>Conductores</span></a>
+          <a href="trips.html" class="nav-item active"><span class="nav-item-icon"><i class="fas fa-route"></i></span><span>Viajes</span></a>
+        </div>
+        <div class="nav-section">
+          <div class="nav-section-title">Analíticas</div>
+          <a href="analytics.html" class="nav-item"><span class="nav-item-icon"><i class="fas fa-chart-line"></i></span><span>Analíticas</span></a>
+          <a href="heatmaps.html" class="nav-item"><span class="nav-item-icon"><i class="fas fa-fire"></i></span><span>Zonas Calientes</span></a>
+        </div>
+        <div class="nav-section">
+          <div class="nav-section-title">Gestión</div>
+          <a href="notifications.html" class="nav-item"><span class="nav-item-icon"><i class="fas fa-bell"></i></span><span>Notificaciones</span></a>
+          <a href="settings.html" class="nav-item"><span class="nav-item-icon"><i class="fas fa-cog"></i></span><span>Configuración</span></a>
+        </div>
+      </nav>
+      <div class="sidebar-footer">
+        <a href="login.html" class="nav-item" style="color: var(--error);"><span class="nav-item-icon"><i class="fas fa-sign-out-alt"></i></span><span>Cerrar Sesión</span></a>
+      </div>
+    </aside>
+    
+    <main class="main-content" id="main-content">
+      <header class="header">
+        <div class="header-left"><h1 class="page-title">Gestión de Viajes</h1></div>
+        <div class="header-right">
+          <button class="btn btn-secondary" onclick="window.location.href='index.html'"><i class="fas fa-arrow-left"></i> Volver</button>
+          <button class="btn btn-primary" onclick="TripsPage.openNewTripModal()"><i class="fas fa-plus"></i> Nuevo Viaje</button>
+        </div>
+      </header>
+      
+      <div class="dashboard-content">
+        <div class="table-container" style="margin-bottom: 24px;">
+          <div class="table-header">
+            <h3 class="table-title">Filtros y Búsqueda</h3>
+          </div>
+          <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 16px; padding: 20px;">
+            <div class="form-group" style="margin-bottom: 0;">
+              <label class="form-label">Estado</label>
+              <select class="form-select" id="filter-status">
+                <option value="">Todos</option>
+                <option value="pending">Pendiente</option>
+                <option value="in_progress">En Curso</option>
+                <option value="completed">Completado</option>
+                <option value="cancelled">Cancelado</option>
+              </select>
+            </div>
+            <div class="form-group" style="margin-bottom: 0;">
+              <label class="form-label">Conductor</label>
+              <select class="form-select" id="filter-driver"><option value="">Todos</option></select>
+            </div>
+            <div class="form-group" style="margin-bottom: 0;">
+              <label class="form-label">Fecha desde</label>
+              <input type="date" class="form-input" id="filter-date-from">
+            </div>
+            <div class="form-group" style="margin-bottom: 0;">
+              <label class="form-label">Fecha hasta</label>
+              <input type="date" class="form-input" id="filter-date-to">
+            </div>
+          </div>
+        </div>
+        
+        <div class="table-container">
+          <div class="table-header">
+            <h3 class="table-title">Listado de Viajes</h3>
+            <div class="table-actions">
+              <button class="btn btn-sm btn-secondary"><i class="fas fa-download"></i> Exportar CSV</button>
+              <button class="btn btn-sm btn-secondary"><i class="fas fa-file-pdf"></i> Exportar PDF</button>
+            </div>
+          </div>
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>ID</th>
+                <th>Pasajero</th>
+                <th>Origen</th>
+                <th>Destino</th>
+                <th>Conductor</th>
+                <th>Fecha</th>
+                <th>Precio</th>
+                <th>Estado</th>
+                <th>Acciones</th>
+              </tr>
+            </thead>
+            <tbody id="trips-table-body">
+              <tr>
+                <td>#TRP-001</td>
+                <td>Martín García</td>
+                <td>Aeropuerto Alicante</td>
+                <td>Playa de San Juan</td>
+                <td>Carlos Martínez</td>
+                <td>05/03 14:30</td>
+                <td>€35.50</td>
+                <td><span class="status-badge success"><span class="status-dot"></span>Completado</span></td>
+                <td>
+                  <button class="btn btn-sm btn-secondary" onclick="TripsPage.viewTrip('TRP-001')"><i class="fas fa-eye"></i></button>
+                  <button class="btn btn-sm btn-secondary"><i class="fas fa-file-invoice"></i></button>
+                </td>
+              </tr>
+              <tr>
+                <td>#TRP-002</td>
+                <td>Laura Sánchez</td>
+                <td>Centro Ciudad</td>
+                <td>Cabo de las Huertas</td>
+                <td>María López</td>
+                <td>05/03 15:15</td>
+                <td>€18.20</td>
+                <td><span class="status-badge warning"><span class="status-dot"></span>En Curso</span></td>
+                <td>
+                  <button class="btn btn-sm btn-secondary" onclick="TripsPage.viewTrip('TRP-002')"><i class="fas fa-eye"></i></button>
+                  <button class="btn btn-sm btn-danger"><i class="fas fa-times"></i></button>
+                </td>
+              </tr>
+              <tr>
+                <td>#TRP-003</td>
+                <td>Roberto Fernández</td>
+                <td>Estación Renfe</td>
+                <td>Aeropuerto Alicante</td>
+                <td>Sin asignar</td>
+                <td>05/03 16:00</td>
+                <td>€42.00</td>
+                <td><span class="status-badge info"><span class="status-dot"></span>Pendiente</span></td>
+                <td>
+                  <button class="btn btn-sm btn-secondary" onclick="TripsPage.viewTrip('TRP-003')"><i class="fas fa-eye"></i></button>
+                  <button class="btn btn-sm btn-primary"><i class="fas fa-user-plus"></i></button>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </main>
+  </div>
+  
+  <!-- Trip Detail Modal -->
+  <div class="modal-overlay" id="trip-detail-modal">
+    <div class="modal" style="max-width: 700px;">
+      <div class="modal-header">
+        <h3 class="modal-title">Detalle del Viaje</h3>
+        <button class="modal-close" onclick="TripsPage.closeTripModal()">×</button>
+      </div>
+      <div class="modal-body" id="trip-detail-content">
+        <div style="display: grid; grid-template-columns: 2fr 1fr; gap: 24px;">
+          <div>
+            <h4 style="margin-bottom: 16px;">Ruta</h4>
+            <div class="trip-timeline">
+              <div class="timeline-item completed">
+                <strong>Origen</strong><br>
+                <span style="color: var(--text-secondary);">Aeropuerto Alicante</span><br>
+                <small style="color: var(--text-tertiary);">05/03 14:30</small>
+              </div>
+              <div class="timeline-item current">
+                <strong>En curso</strong><br>
+                <span style="color: var(--text-secondary);">Recogiendo pasajero</span>
+              </div>
+              <div class="timeline-item">
+                <strong>Destino</strong><br>
+                <span style="color: var(--text-secondary);">Playa de San Juan</span><br>
+                <small style="color: var(--text-tertiary);">ETA: 14:55</small>
+              </div>
+            </div>
+            <div id="trip-map" style="height: 250px; margin-top: 20px; border-radius: var(--radius-md);"></div>
+          </div>
+          <div>
+            <div class="detail-section">
+              <h4>Información</h4>
+              <div class="detail-row"><span class="detail-label">ID</span><span class="detail-value">#TRP-002</span></div>
+              <div class="detail-row"><span class="detail-label">Pasajero</span><span class="detail-value">Laura Sánchez</span></div>
+              <div class="detail-row"><span class="detail-label">Teléfono</span><span class="detail-value"><a href="tel:+34600123456">+34 600 123 456</a></span></div>
+              <div class="detail-row"><span class="detail-label">Conductor</span><span class="detail-value">María López</span></div>
+              <div class="detail-row"><span class="detail-label">Vehículo</span><span class="detail-value">Tesla Model 3</span></div>
+              <div class="detail-row"><span class="detail-label">Distancia</span><span class="detail-value">12.5 km</span></div>
+              <div class="detail-row"><span class="detail-label">Duración</span><span class="detail-value">25 min</span></div>
+              <div class="detail-row"><span class="detail-label">Precio</span><span class="detail-value">€18.20</span></div>
+              <div class="detail-row"><span class="detail-label">Estado</span><span class="status-badge warning"><span class="status-dot"></span>En Curso</span></div>
+            </div>
+            <div style="margin-top: 16px; display: flex; flex-direction: column; gap: 8px;">
+              <button class="btn btn-primary"><i class="fas fa-phone"></i> Llamar al conductor</button>
+              <button class="btn btn-secondary"><i class="fas fa-comment"></i> Enviar mensaje</button>
+              <button class="btn btn-danger"><i class="fas fa-times"></i> Cancelar viaje</button>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-secondary" onclick="TripsPage.closeTripModal()">Cerrar</button>
+        <button class="btn btn-primary"><i class="fas fa-file-invoice"></i> Generar Factura</button>
+      </div>
+    </div>
+  </div>
+  
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <script src="js/app.js"></script>
+  <script>
+    const TripsPage = {
+      init() { this.loadTrips(); },
+      async loadTrips() {
+        try {
+          const response = await API.getTrips();
+          if (response.success) console.log('[TripsPage] Loaded:', response.data);
+        } catch (error) { console.error('[TripsPage] Error:', error); }
+      },
+      viewTrip(id) {
+        document.getElementById('trip-detail-modal').classList.add('open');
+        setTimeout(() => {
+          const map = L.map('trip-map').setView([38.3452, -0.4810], 13);
+          L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map);
+          L.marker([38.3452, -0.4810]).addTo(map).bindPopup('Origen').openPopup();
+          L.marker([38.3552, -0.4710]).addTo(map).bindPopup('Destino');
+        }, 100);
+      },
+      closeTripModal() { document.getElementById('trip-detail-modal').classList.remove('open'); },
+      openNewTripModal() { console.log('[TripsPage] New trip'); }
+    };
+    window.TripsPage = TripsPage;
+    document.addEventListener('DOMContentLoaded', () => TripsPage.init());
+  </script>
+</body>
+</html>

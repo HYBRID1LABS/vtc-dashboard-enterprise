@@ -1,0 +1,374 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Configuración | VTC Dashboard Enterprise</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" />
+  <link rel="stylesheet" href="css/style.css">
+  <style>
+    .settings-grid { display: grid; grid-template-columns: 250px 1fr; gap: 24px; }
+    .settings-nav { background: var(--bg-card); border: 1px solid var(--border-color); border-radius: var(--radius-lg); padding: 20px; height: fit-content; }
+    .settings-nav-item { padding: 12px 16px; border-radius: var(--radius-md); cursor: pointer; display: flex; align-items: center; gap: 12px; color: var(--text-secondary); transition: var(--transition); margin-bottom: 4px; }
+    .settings-nav-item:hover { background: var(--bg-secondary); color: var(--primary); }
+    .settings-nav-item.active { background: var(--secondary); color: white; }
+    .settings-section { background: var(--bg-card); border: 1px solid var(--border-color); border-radius: var(--radius-lg); padding: 24px; margin-bottom: 24px; }
+    .settings-section h3 { font-size: 18px; font-weight: 600; margin-bottom: 8px; color: var(--primary); }
+    .settings-section p { color: var(--text-secondary); font-size: 14px; margin-bottom: 20px; }
+    .toggle-switch { position: relative; width: 50px; height: 26px; background: var(--border-color); border-radius: 13px; cursor: pointer; transition: var(--transition); }
+    .toggle-switch.active { background: var(--secondary); }
+    .toggle-switch::after { content: ''; position: absolute; top: 3px; left: 3px; width: 20px; height: 20px; background: white; border-radius: 50%; transition: var(--transition); }
+    .toggle-switch.active::after { left: 27px; }
+    .api-key-input { font-family: 'JetBrains Mono', monospace; }
+    .danger-zone { border: 2px solid var(--error); }
+  </style>
+</head>
+<body>
+  <div class="app-container">
+    <aside class="sidebar" id="sidebar">
+      <div class="sidebar-header">
+        <div class="logo"><div class="logo-icon">🚖</div><span>VTC Alicante</span></div>
+        <button class="sidebar-toggle" id="sidebar-toggle"><i class="fas fa-chevron-left"></i></button>
+      </div>
+      <nav class="sidebar-nav">
+        <div class="nav-section">
+          <div class="nav-section-title">Principal</div>
+          <a href="index.html" class="nav-item"><span class="nav-item-icon"><i class="fas fa-home"></i></span><span>Dashboard</span></a>
+          <a href="drivers.html" class="nav-item"><span class="nav-item-icon"><i class="fas fa-users"></i></span><span>Conductores</span></a>
+          <a href="trips.html" class="nav-item"><span class="nav-item-icon"><i class="fas fa-route"></i></span><span>Viajes</span></a>
+        </div>
+        <div class="nav-section">
+          <div class="nav-section-title">Analíticas</div>
+          <a href="analytics.html" class="nav-item"><span class="nav-item-icon"><i class="fas fa-chart-line"></i></span><span>Analíticas</span></a>
+          <a href="heatmaps.html" class="nav-item"><span class="nav-item-icon"><i class="fas fa-fire"></i></span><span>Zonas Calientes</span></a>
+        </div>
+        <div class="nav-section">
+          <div class="nav-section-title">Gestión</div>
+          <a href="notifications.html" class="nav-item"><span class="nav-item-icon"><i class="fas fa-bell"></i></span><span>Notificaciones</span></a>
+          <a href="settings.html" class="nav-item active"><span class="nav-item-icon"><i class="fas fa-cog"></i></span><span>Configuración</span></a>
+        </div>
+      </nav>
+      <div class="sidebar-footer">
+        <a href="login.html" class="nav-item" style="color: var(--error);"><span class="nav-item-icon"><i class="fas fa-sign-out-alt"></i></span><span>Cerrar Sesión</span></a>
+      </div>
+    </aside>
+    
+    <main class="main-content" id="main-content">
+      <header class="header">
+        <div class="header-left"><h1 class="page-title">Configuración</h1></div>
+        <div class="header-right">
+          <button class="btn btn-primary" onclick="SettingsPage.saveAll()"><i class="fas fa-save"></i> Guardar Cambios</button>
+        </div>
+      </header>
+      
+      <div class="dashboard-content">
+        <div class="settings-grid">
+          <!-- Settings Navigation -->
+          <div class="settings-nav">
+            <div class="settings-nav-item active" onclick="SettingsPage.showSection('general')">
+              <i class="fas fa-cog"></i> General
+            </div>
+            <div class="settings-nav-item" onclick="SettingsPage.showSection('company')">
+              <i class="fas fa-building"></i> Empresa
+            </div>
+            <div class="settings-nav-item" onclick="SettingsPage.showSection('drivers')">
+              <i class="fas fa-users"></i> Conductores
+            </div>
+            <div class="settings-nav-item" onclick="SettingsPage.showSection('vehicles')">
+              <i class="fas fa-car"></i> Vehículos
+            </div>
+            <div class="settings-nav-item" onclick="SettingsPage.showSection('pricing')">
+              <i class="fas fa-euro-sign"></i> Tarifas
+            </div>
+            <div class="settings-nav-item" onclick="SettingsPage.showSection('uber')">
+              <i class="fab fa-uber"></i> Uber API
+            </div>
+            <div class="settings-nav-item" onclick="SettingsPage.showSection('notifications')">
+              <i class="fas fa-bell"></i> Notificaciones
+            </div>
+            <div class="settings-nav-item" onclick="SettingsPage.showSection('users')">
+              <i class="fas fa-user-shield"></i> Usuarios
+            </div>
+            <div class="settings-nav-item" onclick="SettingsPage.showSection('security')">
+              <i class="fas fa-shield-alt"></i> Seguridad
+            </div>
+            <div class="settings-nav-item" style="color: var(--error);" onclick="SettingsPage.showSection('danger')">
+              <i class="fas fa-exclamation-triangle"></i> Zona de Peligro
+            </div>
+          </div>
+          
+          <!-- Settings Content -->
+          <div class="settings-content">
+            <!-- General Settings -->
+            <div id="settings-general" class="settings-section">
+              <h3>⚙️ Configuración General</h3>
+              <p>Ajustes básicos del sistema</p>
+              
+              <div class="form-group">
+                <label class="form-label">Nombre de la Empresa</label>
+                <input type="text" class="form-input" value="VTC Alicante">
+              </div>
+              
+              <div class="form-group">
+                <label class="form-label">Zona de Operación Principal</label>
+                <input type="text" class="form-input" value="Alicante, España">
+              </div>
+              
+              <div class="form-group">
+                <label class="form-label">Moneda</label>
+                <select class="form-select">
+                  <option value="EUR">EUR - Euro (€)</option>
+                  <option value="USD">USD - Dólar ($)</option>
+                  <option value="GBP">GBP - Libra (£)</option>
+                </select>
+              </div>
+              
+              <div class="form-group">
+                <label class="form-label">Idioma</label>
+                <select class="form-select">
+                  <option value="es">Español</option>
+                  <option value="en">English</option>
+                  <option value="fr">Français</option>
+                  <option value="de">Deutsch</option>
+                </select>
+              </div>
+              
+              <div class="form-group">
+                <label class="form-label">Zona Horaria</label>
+                <select class="form-select">
+                  <option value="Europe/Madrid" selected>Europe/Madrid (CET)</option>
+                  <option value="Europe/London">Europe/London (GMT)</option>
+                  <option value="UTC">UTC</option>
+                </select>
+              </div>
+              
+              <div style="display: flex; align-items: center; justify-content: space-between; padding: 16px 0; border-top: 1px solid var(--border-color);">
+                <div>
+                  <div style="font-weight: 500;">Modo Oscuro</div>
+                  <div style="font-size: 13px; color: var(--text-secondary);">Activar tema oscuro en el dashboard</div>
+                </div>
+                <div class="toggle-switch" id="dark-mode-toggle" onclick="this.classList.toggle('active')"></div>
+              </div>
+              
+              <div style="display: flex; align-items: center; justify-content: space-between; padding: 16px 0; border-top: 1px solid var(--border-color);">
+                <div>
+                  <div style="font-weight: 500;">Actualización en Tiempo Real</div>
+                  <div style="font-size: 13px; color: var(--text-secondary);">Refrescar datos automáticamente cada 5 segundos</div>
+                </div>
+                <div class="toggle-switch active" onclick="this.classList.toggle('active')"></div>
+              </div>
+            </div>
+            
+            <!-- Uber API Settings -->
+            <div id="settings-uber" class="settings-section">
+              <h3>🚗 Integración Uber API</h3>
+              <p>Configura la conexión con Uber para crear viajes reales y obtener estimaciones</p>
+              
+              <div class="form-group">
+                <label class="form-label">Uber Server Token</label>
+                <input type="password" class="form-input api-key-input" value="sk_test_xxxxxxxxxxxxxxxxxxxx" placeholder="sk_test_...">
+              </div>
+              
+              <div class="form-group">
+                <label class="form-label">Uber Client ID</label>
+                <input type="text" class="form-input" value="xxxxxxxxxxxxxxxxxxxx" placeholder="Client ID">
+              </div>
+              
+              <div class="form-group">
+                <label class="form-label">Uber Client Secret</label>
+                <input type="password" class="form-input api-key-input" value="xxxxxxxxxxxxxxxxxxxx" placeholder="Client Secret">
+              </div>
+              
+              <div style="background: var(--bg-secondary); padding: 16px; border-radius: var(--radius-md); margin: 20px 0;">
+                <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 12px;">
+                  <i class="fas fa-check-circle" style="color: var(--success); font-size: 20px;"></i>
+                  <strong style="color: var(--success);">Conexión Activa</strong>
+                </div>
+                <div style="font-size: 13px; color: var(--text-secondary);">
+                  Última verificación: Hace 2 minutos<br>
+                  Requests hoy: 342 | Límite: 10,000/día
+                </div>
+              </div>
+              
+              <button class="btn btn-secondary" onclick="SettingsPage.testUberConnection()">
+                <i class="fas fa-plug"></i> Probar Conexión
+              </button>
+            </div>
+            
+            <!-- Pricing Settings -->
+            <div id="settings-pricing" class="settings-section">
+              <h3>💰 Tarifas y Precios</h3>
+              <p>Configura las tarifas base y tarifas dinámicas (surge pricing)</p>
+              
+              <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px;">
+                <div class="form-group">
+                  <label class="form-label">Tarifa Base (€)</label>
+                  <input type="number" class="form-input" value="3.50" step="0.10">
+                </div>
+                <div class="form-group">
+                  <label class="form-label">Precio por Km (€)</label>
+                  <input type="number" class="form-input" value="1.85" step="0.05">
+                </div>
+                <div class="form-group">
+                  <label class="form-label">Precio por Minuto (€)</label>
+                  <input type="number" class="form-input" value="0.35" step="0.05">
+                </div>
+                <div class="form-group">
+                  <label class="form-label">Tarifa Mínima (€)</label>
+                  <input type="number" class="form-input" value="8.00" step="0.50">
+                </div>
+              </div>
+              
+              <div style="margin-top: 24px;">
+                <h4 style="margin-bottom: 16px;">Tipos de Vehículo</h4>
+                <table class="data-table">
+                  <thead>
+                    <tr>
+                      <th>Tipo</th>
+                      <th>Multiplicador</th>
+                      <th>Tarifa Base</th>
+                      <th>Precio/Km</th>
+                      <th>Acciones</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr>
+                      <td>🚗 Coche Estándar</td>
+                      <td>1.0x</td>
+                      <td>€3.50</td>
+                      <td>€1.85</td>
+                      <td><button class="btn btn-sm btn-secondary"><i class="fas fa-edit"></i></button></td>
+                    </tr>
+                    <tr>
+                      <td>⭐ Premium</td>
+                      <td>1.5x</td>
+                      <td>€5.25</td>
+                      <td>€2.78</td>
+                      <td><button class="btn btn-sm btn-secondary"><i class="fas fa-edit"></i></button></td>
+                    </tr>
+                    <tr>
+                      <td>🚐 Van (6-8 plazas)</td>
+                      <td>1.8x</td>
+                      <td>€6.30</td>
+                      <td>€3.33</td>
+                      <td><button class="btn btn-sm btn-secondary"><i class="fas fa-edit"></i></button></td>
+                    </tr>
+                    <tr>
+                      <td>🏍️ Moto</td>
+                      <td>0.7x</td>
+                      <td>€2.45</td>
+                      <td>€1.30</td>
+                      <td><button class="btn btn-sm btn-secondary"><i class="fas fa-edit"></i></button></td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+              
+              <div style="margin-top: 24px; padding: 20px; background: var(--bg-secondary); border-radius: var(--radius-md);">
+                <h4 style="margin-bottom: 12px;">⚡ Surge Pricing (Tarifas Dinámicas)</h4>
+                <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px;">
+                  <div>
+                    <div style="font-weight: 500;">Activar Surge Pricing</div>
+                    <div style="font-size: 13px; color: var(--text-secondary);">Ajustar precios automáticamente según demanda</div>
+                  </div>
+                  <div class="toggle-switch active" onclick="this.classList.toggle('active')"></div>
+                </div>
+                
+                <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 12px;">
+                  <div class="form-group" style="margin-bottom: 0;">
+                    <label class="form-label">Multiplicador Bajo</label>
+                    <select class="form-select">
+                      <option value="1.0">1.0x (sin cambio)</option>
+                      <option value="1.1">1.1x (+10%)</option>
+                      <option value="1.2">1.2x (+20%)</option>
+                    </select>
+                  </div>
+                  <div class="form-group" style="margin-bottom: 0;">
+                    <label class="form-label">Multiplicador Medio</label>
+                    <select class="form-select">
+                      <option value="1.3">1.3x (+30%)</option>
+                      <option value="1.4">1.4x (+40%)</option>
+                      <option value="1.5">1.5x (+50%)</option>
+                    </select>
+                  </div>
+                  <div class="form-group" style="margin-bottom: 0;">
+                    <label class="form-label">Multiplicador Alto</label>
+                    <select class="form-select">
+                      <option value="1.8">1.8x (+80%)</option>
+                      <option value="2.0">2.0x (+100%)</option>
+                      <option value="2.5">2.5x (+150%)</option>
+                    </select>
+                  </div>
+                </div>
+              </div>
+            </div>
+            
+            <!-- Danger Zone -->
+            <div id="settings-danger" class="settings-section danger-zone">
+              <h3 style="color: var(--error);">⚠️ Zona de Peligro</h3>
+              <p>Acciones destructivas que no se pueden deshacer</p>
+              
+              <div style="display: flex; align-items: center; justify-content: space-between; padding: 20px; background: rgba(255, 82, 82, 0.1); border-radius: var(--radius-md); margin-bottom: 16px;">
+                <div>
+                  <div style="font-weight: 600; color: var(--error); margin-bottom: 4px;">Eliminar Todos los Datos</div>
+                  <div style="font-size: 13px; color: var(--text-secondary);">Borra conductores, viajes, y toda la base de datos</div>
+                </div>
+                <button class="btn btn-danger" onclick="SettingsPage.confirmDangerAction('delete')">
+                  <i class="fas fa-trash"></i> Eliminar Todo
+                </button>
+              </div>
+              
+              <div style="display: flex; align-items: center; justify-content: space-between; padding: 20px; background: rgba(255, 184, 0, 0.1); border-radius: var(--radius-md);">
+                <div>
+                  <div style="font-weight: 600; color: var(--warning); margin-bottom: 4px;">Resetear Configuración</div>
+                  <div style="font-size: 13px; color: var(--text-secondary);">Restaura todos los ajustes a valores por defecto</div>
+                </div>
+                <button class="btn btn-secondary" style="border-color: var(--warning); color: var(--warning);" onclick="SettingsPage.confirmDangerAction('reset')">
+                  <i class="fas fa-undo"></i> Resetear
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </main>
+  </div>
+  
+  <script src="js/app.js"></script>
+  <script>
+    const SettingsPage = {
+      showSection(section) {
+        document.querySelectorAll('.settings-section').forEach(el => el.style.display = 'none');
+        document.querySelectorAll('.settings-nav-item').forEach(el => el.classList.remove('active'));
+        
+        const target = document.getElementById('settings-' + section);
+        if (target) target.style.display = 'block';
+        
+        event.target.classList.add('active');
+      },
+      
+      saveAll() {
+        console.log('[SettingsPage] Saving all settings...');
+        alert('✅ Configuración guardada exitosamente');
+      },
+      
+      testUberConnection() {
+        console.log('[SettingsPage] Testing Uber connection...');
+        alert('✅ Conexión con Uber API exitosa\nTiempo de respuesta: 142ms');
+      },
+      
+      confirmDangerAction(action) {
+        if (confirm('⚠️ ¿ESTÁS SEGURO? Esta acción no se puede deshacer.\n\nEscribe "CONFIRMAR" para continuar:')) {
+          console.log('[SettingsPage] Dangerous action confirmed:', action);
+        }
+      }
+    };
+    
+    window.SettingsPage = SettingsPage;
+    document.addEventListener('DOMContentLoaded', () => SettingsPage.showSection('general'));
+  </script>
+</body>
+</html>

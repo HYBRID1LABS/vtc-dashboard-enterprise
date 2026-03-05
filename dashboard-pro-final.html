@@ -1,0 +1,430 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>VTC Alicante Dashboard Pro | Hybrid Labs</title>
+    
+    <!-- Leaflet CSS para mapa real -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    
+    <!-- TailwindCSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- Alpine.js para interactividad -->
+    <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
+    
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700;800&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    
+    <style>
+        :root {
+            /* Dark Theme Premium */
+            --bg-primary: #0F1115;
+            --bg-secondary: #161A1F;
+            --bg-card: #1A1D24;
+            --primary: #0077B6;
+            --primary-light: #00A8E8;
+            --secondary: #00B4D8;
+            --accent: #FF6B35;
+            --success: #00C897;
+            --warning: #FFB800;
+            --error: #FF5252;
+            --text-primary: #FFFFFF;
+            --text-secondary: #A0A8B3;
+            --border-color: #2A2F36;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            overflow-x: hidden;
+        }
+
+        /* HEADER */
+        .header {
+            background: var(--bg-secondary);
+            border-bottom: 1px solid var(--border-color);
+            padding: 0 24px;
+            height: 64px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+            backdrop-filter: blur(8px);
+        }
+
+        .logo {
+            font-family: 'Montserrat', sans-serif;
+            font-weight: 700;
+            font-size: 20px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .logo-icon {
+            width: 32px;
+            height: 32px;
+            background: linear-gradient(135deg, var(--primary) 0%, var(--primary-light) 100%);
+            border-radius: 6px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 18px;
+        }
+
+        /* MAPA */
+        #map {
+            height: calc(100vh - 64px);
+            width: 100%;
+            position: absolute;
+            top: 64px;
+            left: 0;
+            z-index: 1;
+        }
+
+        /* PANEL LATERAL */
+        .sidebar {
+            position: absolute;
+            top: 64px;
+            right: 0;
+            width: 400px;
+            height: calc(100vh - 64px);
+            background: var(--bg-secondary);
+            border-left: 1px solid var(--border-color);
+            z-index: 2;
+            overflow-y: auto;
+            transform: translateX(0);
+            transition: transform 0.3s ease;
+        }
+
+        .sidebar.collapsed {
+            transform: translateX(400px);
+        }
+
+        /* DRIVER MARKERS */
+        .driver-marker {
+            background: var(--success);
+            border: 3px solid white;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 20px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+        }
+
+        .driver-marker.busy {
+            background: var(--warning);
+        }
+
+        .driver-marker.offline {
+            background: var(--error);
+        }
+
+        /* METRIC CARDS */
+        .metric-card {
+            background: var(--bg-card);
+            padding: 20px;
+            border-radius: 12px;
+            margin: 16px;
+            border: 1px solid var(--border-color);
+        }
+
+        .metric-value {
+            font-size: 32px;
+            font-weight: 700;
+            color: var(--primary-light);
+        }
+
+        .metric-label {
+            font-size: 14px;
+            color: var(--text-secondary);
+            margin-top: 4px;
+        }
+
+        /* DRIVER LIST */
+        .driver-item {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 16px;
+            border-bottom: 1px solid var(--border-color);
+            transition: background 0.2s;
+        }
+
+        .driver-item:hover {
+            background: var(--bg-tertiary);
+        }
+
+        .driver-avatar {
+            width: 48px;
+            height: 48px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, var(--primary) 0%, var(--primary-light) 100%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 600;
+            font-size: 18px;
+        }
+
+        /* UBER API SIMULATION */
+        .api-status {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 12px 16px;
+            background: var(--bg-card);
+            border-radius: 8px;
+            margin: 16px;
+            font-size: 13px;
+        }
+
+        .status-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: var(--success);
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+
+        /* SCROLLBAR */
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: var(--bg-primary);
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: var(--border-color);
+            border-radius: 4px;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: var(--primary);
+        }
+    </style>
+</head>
+<body x-data="vtcDashboard()">
+    
+    <!-- HEADER -->
+    <header class="header">
+        <div class="header-left">
+            <div class="logo">
+                <div class="logo-icon">🚖</div>
+                <span>VTC Alicante</span>
+            </div>
+            <nav class="nav" style="display: flex; gap: 8px; margin-left: 24px;">
+                <div class="nav-item" style="padding: 8px 16px; border-radius: 8px; cursor: pointer; background: var(--bg-tertiary); color: white; font-weight: 500;">Dashboard</div>
+                <div class="nav-item" style="padding: 8px 16px; border-radius: 8px; cursor: pointer; color: var(--text-secondary);">Conductores</div>
+                <div class="nav-item" style="padding: 8px 16px; border-radius: 8px; cursor: pointer; color: var(--text-secondary);">Viajes</div>
+                <div class="nav-item" style="padding: 8px 16px; border-radius: 8px; cursor: pointer; color: var(--text-secondary);">Ingresos</div>
+                <div class="nav-item" style="padding: 8px 16px; border-radius: 8px; cursor: pointer; color: var(--text-secondary);">Configuración</div>
+            </nav>
+        </div>
+        <div class="header-right" style="display: flex; align-items: center; gap: 16px;">
+            <div style="position: relative; cursor: pointer; font-size: 20px;">
+                🔔
+                <span style="position: absolute; top: -4px; right: -4px; background: var(--accent); color: white; font-size: 10px; font-weight: 600; padding: 2px 5px; border-radius: 999px;">3</span>
+            </div>
+            <div style="width: 36px; height: 36px; background: linear-gradient(135deg, var(--primary) 0%, var(--primary-light) 100%); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: 600; cursor: pointer; border: 2px solid var(--border-color);">FT</div>
+        </div>
+    </header>
+
+    <!-- MAPA -->
+    <div id="map"></div>
+
+    <!-- SIDEBAR -->
+    <div class="sidebar" :class="{ 'collapsed': !sidebarOpen }">
+        
+        <!-- API Status -->
+        <div class="api-status">
+            <div class="status-dot"></div>
+            <span style="color: var(--text-secondary);">Uber API: <strong style="color: var(--success);">Conectado</strong> • Actualizando en tiempo real</span>
+        </div>
+
+        <!-- Métricas -->
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0;">
+            <div class="metric-card" style="margin: 12px;">
+                <div class="metric-value" x-text="drivers.filter(d => d.status === 'available').length">0</div>
+                <div class="metric-label">Disponibles</div>
+            </div>
+            <div class="metric-card" style="margin: 12px;">
+                <div class="metric-value" x-text="drivers.filter(d => d.status === 'busy').length">0</div>
+                <div class="metric-label">En Viaje</div>
+            </div>
+            <div class="metric-card" style="margin: 12px;">
+                <div class="metric-value" style="color: var(--success);" x-text="todayRevenue">€0</div>
+                <div class="metric-label">Ingresos Hoy</div>
+            </div>
+            <div class="metric-card" style="margin: 12px;">
+                <div class="metric-value" style="color: var(--warning);" x-text="todayTrips">0</div>
+                <div class="metric-label">Viajes Hoy</div>
+            </div>
+        </div>
+
+        <!-- Lista de Conductores -->
+        <div style="padding: 16px;">
+            <h3 style="font-size: 16px; font-weight: 600; margin-bottom: 12px; color: var(--text-primary);">Conductores Activos</h3>
+            
+            <template x-for="driver in drivers" :key="driver.id">
+                <div class="driver-item">
+                    <div class="driver-avatar" x-text="driver.initials"></div>
+                    <div style="flex: 1;">
+                        <div style="font-weight: 600; color: var(--text-primary);" x-text="driver.name"></div>
+                        <div style="font-size: 13px; color: var(--text-secondary);" x-text="driver.location"></div>
+                        <div style="display: flex; align-items: center; gap: 8px; margin-top: 4px;">
+                            <span style="font-size: 12px; padding: 2px 8px; border-radius: 12px; font-weight: 500;" 
+                                  :style="{ 
+                                      background: driver.status === 'available' ? 'rgba(0, 200, 151, 0.1)' : 
+                                                 driver.status === 'busy' ? 'rgba(255, 184, 0, 0.1)' : 'rgba(255, 82, 82, 0.1)',
+                                      color: driver.status === 'available' ? 'var(--success)' : 
+                                            driver.status === 'busy' ? 'var(--warning)' : 'var(--error)'
+                                  }"
+                                  x-text="driver.status === 'available' ? 'Disponible' : driver.status === 'busy' ? 'En Viaje' : 'Offline'"></span>
+                            <span style="font-size: 12px; color: var(--text-secondary);" x-text="driver.rating + ' ⭐'"></span>
+                        </div>
+                    </div>
+                    <button @click="centerOnDriver(driver)" style="padding: 6px 12px; background: var(--primary); color: white; border: none; border-radius: 6px; cursor: pointer; font-size: 12px; font-weight: 500;">Ver</button>
+                </div>
+            </template>
+        </div>
+
+        <!-- Configuración Uber API -->
+        <div style="padding: 16px; border-top: 1px solid var(--border-color);">
+            <h3 style="font-size: 14px; font-weight: 600; margin-bottom: 12px; color: var(--text-secondary);">UBER API CONFIGURATION</h3>
+            <div style="font-size: 12px; color: var(--text-tertiary); font-family: 'JetBrains Mono', monospace;">
+                <div style="margin-bottom: 8px;"><strong style="color: var(--text-secondary);">Endpoint:</strong> https://api.uber.com/v1/</div>
+                <div style="margin-bottom: 8px;"><strong style="color: var(--text-secondary);">Product ID:</strong> <span style="color: var(--primary-light);">a1111c8c-cjc2-4f20-9fec-18ca1a5e8a1b</span></div>
+                <div style="margin-bottom: 8px;"><strong style="color: var(--text-secondary);">Server Token:</strong> <span style="color: var(--success);">••••••••••••••••</span></div>
+                <div><strong style="color: var(--text-secondary);">Rate Limit:</strong> <span style="color: var(--warning);">1000 req/hour</span></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Leaflet JS -->
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    
+    <script>
+        function vtcDashboard() {
+            return {
+                sidebarOpen: true,
+                map: null,
+                markers: [],
+                drivers: [
+                    { id: 1, name: 'Carlos García', initials: 'CG', location: 'Centro - Calle Mayor', status: 'available', rating: '4.9', lat: 38.3452, lng: -0.4810 },
+                    { id: 2, name: 'María López', initials: 'ML', location: 'Playa del Postiguet', status: 'busy', rating: '4.8', lat: 38.3436, lng: -0.4906 },
+                    { id: 3, name: 'Juan Martínez', initials: 'JM', location: 'Estación MARQ', status: 'available', rating: '4.7', lat: 38.3513, lng: -0.4742 },
+                    { id: 4, name: 'Ana Sánchez', initials: 'AS', location: 'Puerto de Alicante', status: 'busy', rating: '4.9', lat: 38.3325, lng: -0.4794 },
+                    { id: 5, name: 'Pedro Ruiz', initials: 'PR', location: 'Aeropuerto', status: 'available', rating: '4.6', lat: 38.2822, lng: -0.5581 },
+                    { id: 6, name: 'Laura Fernández', initials: 'LF', location: 'Benidorm', status: 'offline', rating: '4.8', lat: 38.5367, lng: -0.1312 },
+                    { id: 7, name: 'Miguel Torres', initials: 'MT', location: 'Elche', status: 'busy', rating: '4.7', lat: 38.2699, lng: -0.7011 },
+                    { id: 8, name: 'Cristina Molina', initials: 'CM', location: 'Torrevieja', status: 'available', rating: '4.9', lat: 37.9787, lng: -0.6822 }
+                ],
+                todayRevenue: '€1,247',
+                todayTrips: '23',
+                
+                init() {
+                    this.initMap();
+                    this.addDriverMarkers();
+                    this.simulateUberAPI();
+                    this.startRealTimeUpdates();
+                },
+                
+                initMap() {
+                    // Inicializar mapa centrado en Alicante
+                    this.map = L.map('map').setView([38.3452, -0.4810], 11);
+                    
+                    // Capa de OpenStreetMap (gratis, sin API key)
+                    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                        attribution: '© OpenStreetMap contributors',
+                        maxZoom: 18
+                    }).addTo(this.map);
+                    
+                    // Capa dark (estilo Uber)
+                    L.tileLayer('https://cartodb-basemaps-{s}.global.ssl.fastly.net/dark_all/{z}/{x}/{y}{r}.png', {
+                        attribution: '© CartoDB',
+                        maxZoom: 18
+                    }).addTo(this.map);
+                },
+                
+                addDriverMarkers() {
+                    this.drivers.forEach(driver => {
+                        const markerHtml = `<div class="driver-marker ${driver.status}">🚖</div>`;
+                        
+                        const marker = L.marker([driver.lat, driver.lng], {
+                            icon: L.divIcon({
+                                className: 'custom-div-icon',
+                                html: markerHtml,
+                                iconSize: [40, 40],
+                                iconAnchor: [20, 20]
+                            })
+                        }).addTo(this.map);
+                        
+                        marker.bindPopup(`
+                            <div style="min-width: 200px;">
+                                <strong style="font-size: 16px; color: #0F1115;">${driver.name}</strong><br>
+                                <span style="color: #666;">${driver.location}</span><br>
+                                <span style="font-size: 12px; color: ${driver.status === 'available' ? '#00C897' : driver.status === 'busy' ? '#FFB800' : '#FF5252'};">
+                                    ${driver.status === 'available' ? '● Disponible' : driver.status === 'busy' ? '● En Viaje' : '● Offline'}
+                                </span><br>
+                                <span style="font-size: 12px;">⭐ ${driver.rating}</span>
+                            </div>
+                        `);
+                        
+                        this.markers.push(marker);
+                    });
+                },
+                
+                centerOnDriver(driver) {
+                    this.map.flyTo([driver.lat, driver.lng], 14, {
+                        duration: 1.5
+                    });
+                    this.markers[driver.id - 1].openPopup();
+                },
+                
+                simulateUberAPI() {
+                    console.log('🚀 Conectando con Uber API...');
+                    console.log('✅ Endpoint: https://api.uber.com/v1/products');
+                    console.log('✅ Product ID: a1111c8c-cjc2-4f20-9fec-18ca1a5e8a1b');
+                    console.log('✅ Simulación de datos en tiempo real activada');
+                },
+                
+                startRealTimeUpdates() {
+                    // Simular actualización de posición cada 5 segundos
+                    setInterval(() => {
+                        this.drivers.forEach((driver, index) => {
+                            if (driver.status !== 'offline') {
+                                // Pequeño movimiento aleatorio
+                                driver.lat += (Math.random() - 0.5) * 0.001;
+                                driver.lng += (Math.random() - 0.5) * 0.001;
+                                
+                                // Actualizar marcador
+                                if (this.markers[index]) {
+                                    this.markers[index].setLatLng([driver.lat, driver.lng]);
+                                }
+                            }
+                        });
+                    }, 5000);
+                }
+            }
+        }
+    </script>
+</body>
+</html>
