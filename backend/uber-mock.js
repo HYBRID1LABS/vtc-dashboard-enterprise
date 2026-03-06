@@ -234,15 +234,22 @@ function calculateDistance(lat1, lon1, lat2, lon2) {
 }
 
 /**
- * Exportar router Express
+ * Helper: Inicializar database para logging (stub para compatibilidad)
  */
-module.exports = function(router) {
-    console.log('[Uber Mock] Routes initialized - MODO DEMO ACTIVO');
-    
-    router.get('/uber/products', getProducts);
-    router.get('/uber/estimate', getEstimate);
-    router.post('/uber/request', createRequest);
-    router.get('/uber/status', getStatus);
-    
-    return router;
+async function initDatabase(dbPath) {
+    console.log('[Uber Mock] Database path:', dbPath);
+    // No-op en modo mock
+}
+
+/**
+ * Exportar funciones individuales para compatibilidad con server.js
+ */
+module.exports = {
+    getUberProducts: getProducts,
+    getUberEstimate: getEstimate,
+    createUberRequest: createRequest,
+    getUberRequestStatus: getStatus,
+    initDatabase: initDatabase
 };
+
+console.log('[Uber Mock] Functions exported - MODO DEMO ACTIVO');

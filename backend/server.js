@@ -126,15 +126,18 @@ async function initializeDatabase() {
 }
 
 // ===========================================
-// INICIALIZAR UBER API
+// INICIALIZAR UBER API (si es real)
 // ===========================================
 
 function initializeUber() {
-    uberRoutes.initUber({
-        UBER_SERVER_TOKEN: process.env.UBER_SERVER_TOKEN || '',
-        UBER_CLIENT_ID: process.env.UBER_CLIENT_ID || '',
-        UBER_CLIENT_SECRET: process.env.UBER_CLIENT_SECRET || ''
-    });
+    // Solo inicializar si usamos Uber API real
+    if (typeof uberRoutes.initUber === 'function') {
+        uberRoutes.initUber({
+            UBER_SERVER_TOKEN: process.env.UBER_SERVER_TOKEN || '',
+            UBER_CLIENT_ID: process.env.UBER_CLIENT_ID || '',
+            UBER_CLIENT_SECRET: process.env.UBER_CLIENT_SECRET || ''
+        });
+    }
 }
 
 // ===========================================
