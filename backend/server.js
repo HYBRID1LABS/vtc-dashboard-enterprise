@@ -29,10 +29,20 @@ const initSqlJs = require('sql.js');
 // Importar rutas
 const driversRoutes = require('./routes/drivers');
 const tripsRoutes = require('./routes/trips');
-const uberRoutes = require('./routes/uber');
 const analyticsRoutes = require('./routes/analytics');
 const notificationsRoutes = require('./routes/notifications');
 const { getDatabase } = require('./database');
+
+// Uber API: Usar mock si no hay API key real
+const UBER_API_KEY = process.env.UBER_API_KEY;
+let uberRoutes;
+if (UBER_API_KEY && UBER_API_KEY !== 'demo' && UBER_API_KEY.length > 10) {
+    uberRoutes = require('./routes/uber');
+    console.log('[Server] Uber API real configurada');
+} else {
+    uberRoutes = require('./uber-mock');
+    console.log('[Server] Uber API MODO DEMO activado (uber-mock.js)');
+}
 
 // ===========================================
 // CONFIGURACIÓN
