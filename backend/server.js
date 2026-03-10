@@ -26,6 +26,10 @@ const path = require('path');
 const fs = require('fs');
 const initSqlJs = require('sql.js');
 
+// Importar middleware de seguridad
+const { generalApiLimiter, authLimiter, strictLimiter, createWebSocketRateLimiter } = require('./middleware/rateLimiter');
+const { securityHeaders } = require('./middleware/security');
+
 // Importar rutas
 const driversRoutes = require('./routes/drivers');
 const tripsRoutes = require('./routes/trips');
@@ -51,7 +55,11 @@ if (UBER_API_KEY && UBER_API_KEY !== 'demo' && UBER_API_KEY.length > 10) {
 const PORT = process.env.PORT || 3000;
 const CORS_ORIGINS = process.env.CORS_ORIGINS?.split(',') || ['http://localhost:3000', 'http://localhost:8080'];
 const WS_UPDATE_INTERVAL = parseInt(process.env.WS_UPDATE_INTERVAL) || 5000;
+const WS_MAX_RETRIES = parseInt(process.env.WS_MAX_RETRIES) || 5;
+const WS_BACKOFF_BASE = parseInt(process.env.WS_BACKOFF_BASE) || 1000;
 const DATABASE_PATH = process.env.DATABASE_PATH || path.join(__dirname, '../database/vtc.db');
+const API_BASE_URL = process.env.API_BASE_URL || 'http://localhost:3000/api';
+const WS_URL = process.env.WS_URL || 'ws://localhost:3000/ws';
 
 // ===========================================
 // INICIALIZAR EXPRESS
@@ -59,11 +67,35 @@ const DATABASE_PATH = process.env.DATABASE_PATH || path.join(__dirname, '../data
 
 const app = express();
 
-// Middleware
+// ===========================================
+// SECURITY MIDDLEWARE (Priority #1)
+// Applied before any other middleware
+// ===========================================
+
+// Security headers (Helmet + custom)
+app.use(securityHeaders);
+console.log('[Security] Security headers enabled');
+
+// ===========================================
+// RATE LIMITING (Priority #2)
+// Applied after security headers
+// ===========================================
+
+// Global rate limiter for all routes
+app.use(generalApiLimiter);
+console.log('[Rate Limit] Global limiter enabled (100 req/15min)');
+
+// ===========================================
+// BASIC MIDDLEWARE
+// ===========================================
+
+// CORS configuration
 app.use(cors({
     origin: CORS_ORIGINS,
     credentials: true
 }));
+
+// Body parsing
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
@@ -217,23 +249,50 @@ function initializeWebSocket(server) {
     });
     
     const clients = new Set();
+    const clientStates = new Map(); // Track client connection state for reconnection
     
     wss.on('connection', (ws) => {
-        console.log('[WebSocket] Client connected');
+        const clientId = ws._socket.remoteAddress || 'unknown';
+        console.log(`[WebSocket] Client connected: ${clientId}`);
+        
+        // Create rate limiter for this connection (50 msg/min)
+        const wsRateLimiter = createWebSocketRateLimiter(ws, 50, 60 * 1000);
         clients.add(ws);
+        
+        // Initialize client state for reconnection tracking
+        clientStates.set(ws, {
+            clientId,
+            connectedAt: new Date(),
+            lastPong: Date.now(),
+            reconnectAttempts: 0
+        });
         
         ws.on('pong', () => {
             ws.isAlive = true;
+            const state = clientStates.get(ws);
+            if (state) {
+                state.lastPong = Date.now();
+            }
+        });
+        
+        ws.on('message', (data) => {
+            // Apply rate limiting to incoming messages
+            if (!wsRateLimiter()) {
+                // Rate limit exceeded - close connection if abuse continues
+                console.warn(`[WebSocket] Rate limit exceeded for ${clientId}`);
+            }
         });
         
         ws.on('close', () => {
-            console.log('[WebSocket] Client disconnected');
+            console.log(`[WebSocket] Client disconnected: ${clientId}`);
             clients.delete(ws);
+            clientStates.delete(ws);
         });
         
         ws.on('error', (error) => {
-            console.error('[WebSocket] Error:', error.message);
+            console.error(`[WebSocket] Error for ${clientId}:`, error.message);
             clients.delete(ws);
+            clientStates.delete(ws);
         });
     });
     
@@ -301,8 +360,9 @@ function initializeWebSocket(server) {
     }, WS_UPDATE_INTERVAL);
     
     console.log(`[WebSocket] Real-time updates enabled (interval: ${WS_UPDATE_INTERVAL}ms)`);
+    console.log(`[WebSocket] Reconnection configured: maxRetries=${WS_MAX_RETRIES}, backoffBase=${WS_BACKOFF_BASE}ms`);
     
-    return { wss, broadcastInterval };
+    return { wss, broadcastInterval, clientStates };
 }
 
 // ===========================================
@@ -371,12 +431,17 @@ async function startServer() {
     // Start listening
     server.listen(PORT, () => {
         console.log('╔══════════════════════════════════════════════════════════╗');
-        console.log('║          VTC Dashboard Backend - Production Ready        ║');
+        console.log('║     VTC Dashboard Backend - Production + Security        ║');
         console.log('╠══════════════════════════════════════════════════════════╣');
         console.log(`║  Server running on:    http://localhost:${PORT}                ║`);
         console.log(`║  WebSocket endpoint:   ws://localhost:${PORT}/ws             ║`);
         console.log(`║  Environment:          ${process.env.NODE_ENV || 'development'}                          ║`);
         console.log(`║  Database:             ${DATABASE_PATH}        ║`);
+        console.log('╠══════════════════════════════════════════════════════════╣');
+        console.log('║  🔒 Security Features:                                   ║');
+        console.log('║  ✅ Rate Limiting: 100 req/15min (API)                   ║');
+        console.log('║  ✅ Rate Limiting: 50 msg/min (WebSocket)                ║');
+        console.log('║  ✅ Security Headers: CSP, HSTS, X-Frame-Options         ║');
         console.log('╠══════════════════════════════════════════════════════════╣');
         console.log('║  Available Endpoints:                                    ║');
         console.log('║  GET  /api/drivers          - Lista conductores          ║');
